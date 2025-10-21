@@ -4,16 +4,21 @@ format: html
 ---
 
 ## Question 1: Outstanding Classmate
-If [Student Name] doesn't earn an A, then nobody should, because... [one sentence]
+
+If **[Student Name]** doesn't earn an A, then nobody should, because they consistently provided thoughtful, detailed peer code reviews that helped me identify not just what was wrong with my code, but why my approach could be improved, demonstrating exceptional collaboration and generosity in helping classmates grow.
 
 ## Question 2: Most Difficult Part
-The most difficult part of the class was... [one sentence]
+
+The most difficult part of the class was **understanding when and how to use different join types** (left, right, inner, full), especially when working with real-world datasets where the relationships between tables weren't immediately obvious and column names didn't always match.
 
 ## Question 3: Easiest Part
-The easiest part of the class was... [one sentence]
+
+The easiest part of the class was **basic data filtering and selection** using `filter()` and `select()`, because these operations felt intuitive and I could immediately see the results of my code, making it easy to verify I was doing the right thing.
 
 ## Question 4: Most Surprising/Interesting
-What surprised me most was... [one sentence]
+
+What surprised me most was **how much visual design choices matter in data communication** - I didn't expect that learning about colors, themes, and legend placement would be as important as learning statistical methods, but I now understand that even perfect analyses fail if visualizations aren't clear and engaging.
 
 ## Question 5: Advice for Future Students
-My advice to future STAT 331 students is... [one sentence]
+
+My advice to future STAT 331 students is: **Start assignments early and embrace the revision process** - you'll learn far more from revising your work based on feedback than from getting it perfect the first time, and the early start gives you time to truly understand concepts rather than just rushing to complete tasks.
