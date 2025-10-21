@@ -1,0 +1,19 @@
+---
+title: "Lightning Round"
+format: html
+---
+
+## Question 1: Outstanding Classmate
+If [Student Name] doesn't earn an A, then nobody should, because... [one sentence]
+
+## Question 2: Most Difficult Part
+The most difficult part of the class was... [one sentence]
+
+## Question 3: Easiest Part
+The easiest part of the class was... [one sentence]
+
+## Question 4: Most Surprising/Interesting
+What surprised me most was... [one sentence]
+
+## Question 5: Advice for Future Students
+My advice to future STAT 331 students is... [one sentence]
