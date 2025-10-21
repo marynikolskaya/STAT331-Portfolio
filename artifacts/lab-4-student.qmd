@@ -1,0 +1,331 @@
+---
+title: "Lab 4: Childcare Costs in California"
+author: "Marietta Nikolskaya"
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    warning: false
+    embed-resources: true
+editor: source
+---
+
+# Part One: Set-up
+
+In this lab, we will be using the **tidyr** and **forcats** packages to explore
+the cost of childcare across the US. **You are expected to use functions from tidyr and forcats to do your data manipulation!**
+
+<!-- See instructions for words of advice on completing the assignment! -->
+
+# Exploring Childcare Costs
+
+## The Data
+
+In this lab we're going look at the median weekly cost of childcare in California. The data come to us from [TidyTuesday](https://github.com/rfordatascience/tidytuesday). A detailed description of the data can be found [here](https://github.com/rfordatascience/tidytuesday/blob/master/data/2023/2023-05-09/readme.md). **You will need to use this data dictionary to complete the lab!**
+
+We also have information from the California State Controller on tax revenue for california counties from 2005 - 2018. I compiled the data from [this website](https://counties.bythenumbers.sco.ca.gov/#!/year/default) for you. Note that there is no data for San Franscisco County. The variables included in the `ca_tax_revenue.csv` data file (loaded below) include:
+
+- `entity_name`: County name
+- `year`: fiscal year
+- `total_property_taxes`: total revenue in $ from property taxes
+- `sales_and_use_taxes`: total revenue in $ from sales and use taxes
+
+**0. Load the appropriate libraries and the data.**
+
+```{r}
+#| label: packages
+
+library(tidyverse) 
+library(forcats)
+
+```
+
+```{r}
+#| label: load-data
+
+childcare_costs <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-05-09/childcare_costs.csv')
+
+
+counties <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-05-09/counties.csv')
+
+
+tax_rev <- read_csv('https://atheobold.github.io/groupworthy-data-science/labs/instructions/data/ca_tax_revenue.csv')
+
+```
+## Revision
+
+### What I learned: Professional reports must suppress all messages and warnings. Only load packages that are actually used in the analysis. The readxl package is for Excel files, which I'm not using here, thus I do not need it. 
+
+**1. Briefly describe the `childcare_costs` dataset (~ 4 sentences). What information does it contain?**
+
+This datset offers childcare price data by childcare provider type, age of children, and county characteristics. Data is available from 2008 to 2018. Every row is county in a state in a specific year. In other words, every row is a specific counties info about childcare in that specific county during a specific year. The childcare info includes unemployment rate for various age groups and genders, poverty rate, median household earnings and spendings, race...etc. 
+
+## Revision: 
+
+#### What I did wrong: I only described the structure and variables without providing important context about data collection.
+
+#### Improved description: The childcare_costs dataset comes from TidyTuesday and contains childcare pricing information collected across U.S. counties from 2008 to 2018. Each row represents a specific county in a given year, with data compiled to understand how childcare costs vary by provider type, children's age, and local demographic and economic characteristics. The dataset includes variables such as unemployment rates by age group and gender, poverty rates, median household income and spending, and racial demographics. This comprehensive data allows researchers to investigate how socioeconomic factors relate to childcare accessibility and affordability across different communities.
+
+#### What I learned: Always provide the who, what, when, where, why, and how of data collection. Understanding context is crucial for accurate interpretation. A dataset description should tell a story about the data's origin and purpose, not just list variables.
+
+## California Childcare Costs
+
+**2. Let's start by focusing only on California. Create a `ca_childcare` dataset of childcare costs in California, containing (1) county information and (2) all information from the `childcare_costs` dataset. You should do all of this within one pipeline.** 
+
+```{r}
+#| label: ca-childcare-costs
+ca_childcare <- counties |>
+  filter(state_abbreviation == "CA") |>
+  left_join(childcare_costs, by = "county_fips_code")
+ca_childcare
+
+```
+## Revision: 
+
+#### What I did wrong: I joined the entire datasets before filtering, which is computationally inefficient.
+
+#### What I learned: Filter data to the subset you need before joining to work with smaller datasets. This improves performance and makes the code more efficient. The order of operations matters for computational efficiency.
+
+<!-- Checkpoint: There are 58 counties in CA and 11 years in the dataset. Therefore, your new dataset should have 53 x 11 = 638 observations. -->
+
+**3. Now, lets add the tax revenue information to the `ca_childcare` dataset. Add the data from `tax_rev` for the counties and years that are already in the `ca_childcare` data. Overwrite the old `ca_childcare` data with this dataset.**
+
+```{r}
+#| label: add-tax-information
+ca_childcare <- ca_childcare |> 
+  left_join(
+    tax_rev, 
+    join_by(county_name == entity_name, study_year == year)
+  )
+ca_childcare
+
+
+```
+## Revision: 
+
+#### What I did wrong: I used the old by = c("county_name" = "entity_name", "study_year" = "year") syntax for joining with non-matching keys.
+
+#### What I learned: The modern join_by() function provides clearer syntax for joining datasets with non-matching key names. Using join_by(county_name == entity_name) is more readable than the older by = c() syntax.
+
+<!-- Checkpoint: You are only adding columns here, so your new dataset should still have 638 observations! -->
+
+**4. Using a function from the `forcats` package, complete the code below to create a new variable where each county is categorized into one of the [ten (10) Census regions](https://census.ca.gov/regions/) in California. Use the Region description (from the plot), not the Region number.** The code below will help you get started.
+
+```{r}
+#| label: defining-census-regions
+
+superior_counties <- c("Butte","Colusa","El Dorado",
+                       "Glenn","Lassen","Modoc",
+                       "Nevada","Placer","Plumas",
+                       "Sacramento","Shasta","Sierra","Siskiyou",
+                       "Sutter","Tehama","Yolo","Yuba")
+
+north_coast_counties <- c("Del Norte","Humboldt","Lake",
+                          "Mendocino","Napa","Sonoma","Trinity")
+
+san_fran_counties <- c("Alameda","Contra Costa","Marin",
+                       "San Francisco","San Mateo","Santa Clara",
+                       "Solano")
+
+n_san_joaquin_counties <- c("Alpine","Amador","Calaveras","Madera",
+                            "Mariposa","Merced","Mono","San Joaquin",
+                            "Stanislaus","Tuolumne")
+
+central_coast_counties <- c("Monterey","San Benito","San Luis Obispo",
+                            "Santa Barbara","Santa Cruz","Ventura")
+
+s_san_joaquin_counties <- c("Fresno","Inyo","Kern","Kings","Tulare")
+
+inland_counties <- c("Riverside","San Bernardino")
+
+la_county <- "Los Angeles"
+
+orange_county  <- "Orange"
+
+san_diego_imperial_counties <- c("Imperial","San Diego")
+
+
+```
+
+```{r}
+#| label: recoding-county-to-census-regions
+# Finish this code using the census regions defined above
+
+ca_childcare <- ca_childcare |>
+  mutate(
+    county_name_clean = str_remove(county_name, " County"),
+    county_name_clean = as.factor(county_name_clean),
+    census_region = fct_collapse(county_name_clean,
+      "Superior" = superior_counties,
+      "North Coast" = north_coast_counties,
+      "San Fran" = san_fran_counties,
+      "N San Joaquin" = n_san_joaquin_counties,
+      "Central Coast" = central_coast_counties,
+      "S San Joaquin" = s_san_joaquin_counties,
+      "Inland" = inland_counties,
+      "LA" = la_county,
+      "Orange" = orange_county,
+      "San Diego" = san_diego_imperial_counties
+    )
+  )
+
+
+ca_childcare
+
+```
+
+<!-- Tip: I have provided you with code that eliminates the word "County" from each of the county names in your `ca_childcare` dataset. You should keep this line of code and pipe into the rest of your data manipulations. -->
+
+**5. Let's consider the median household income of each region, and how that income has changed over time. Create a table with ten rows, one for each region, and two columns, one for 2008 and one for 2018 (plus a column for region). The cells should contain the `median()` of the median household income (expressed in 2018 dollars) of the `region` and the `study_year`. Order the rows by 2018 values from highest income to lowest income.**
+
+<!-- Tip: This will require transforming your data! Sketch out what you want the data to look like before you begin to code. You should be starting with your California dataset that contains the regions! -->
+
+```{r}
+#| label: median-income-by-region-over-time
+ca_median_income <- ca_childcare |> 
+  filter(study_year %in% c(2008, 2018)) |> 
+  group_by(census_region, study_year) |>
+  summarize(median_income = median(mhi_2018), .groups = "drop") |>
+  pivot_wider(
+    names_from = study_year, 
+    values_from = median_income,
+    names_prefix = "median_income_"
+  ) |> 
+  arrange(desc(median_income_2018))
+ca_median_income
+```
+
+## Revision:
+
+#### What I did wrong: My table retained the grouping variable, and the column names "2008" and "2018" don't clearly indicate what they represent.
+
+#### What I learned: When grouping by multiple variables, the first grouping persists after summarize(). Use .groups = "drop" to remove all grouping. Use names_prefix in pivot_wider() to create descriptive column names like median_income_2008 instead of just 2008.
+
+
+**6. Which California `region` had the lowest `median` full-time median weekly price for center-based childcare for infants in 2018? Does this `region` correspond to the `region` with the lowest `median` income in 2018 that you found in Q4?**
+
+```{r}
+#| label: lowest-median-weekly-price-2018
+ca_childcare |> 
+  filter(study_year == 2018) |> 
+  group_by(census_region) |> 
+  summarize(median_weekly_price = median(mc_infant)) |>
+  slice_min(median_weekly_price, n = 1)
+
+```
+## Revision: 
+
+#### What I did wrong: I manually arranged and sliced, and I saved an object when the question only asked for output.
+
+#### What I learned: Use slice_min() or slice_max() to directly extract rows with minimum or maximum values instead of arranging and manually slicing. Don't create objects when only output is needed—this clutters the workspace unnecessarily.
+
+### No, the region with the lowest median childcare cost for infants in 2018 is Superior, while the region with the lowest median income in 2018 is North Coast. 
+
+<!-- Checkpoint: The code should give me the EXACT answer. This means having the code output the exact row(s) and variable(s) necessary for providing the solution. -->
+
+**7. The following plot shows, for all ten regions, the change over time of the full-time median price for center-based childcare for infants, toddlers, and preschoolers. Recreate the plot. You do not have to replicate the exact colors or theme, but your plot should have the same content, including the order of the facets and legend, reader-friendly labels, axes breaks, and a loess smoother.**
+
+![Plot to recreate](https://atheobold.github.io/groupworthy-data-science/labs/instructions/images/lab-4-recreate-plot.png)
+
+<!-- See instructions for hints on recreating the plot! -->
+
+```{r}
+#| label: recreate-plot
+library(viridis)
+
+data_plot <- ca_childcare |> 
+  pivot_longer(
+    cols = c(mc_infant, mc_toddler, mc_preschool),
+    names_to = "age_group",
+    values_to = "price"
+  ) |>
+  mutate(
+    age_group = str_remove(age_group, "mc_"),
+    age_group = str_to_title(age_group),
+    age_group = fct_relevel(age_group, "Infant", "Toddler", "Preschool")
+  ) |>
+  ggplot(aes(x = study_year, y = price, color = census_region)) + 
+  geom_point(size = 0.8) + 
+  geom_smooth(method = "loess", se = FALSE, linewidth = 1) + 
+  facet_wrap(~ age_group) +
+  labs(
+    x = "Study Year",
+    y = "Weekly Median Price for Center-Based Childcare ($)",
+    color = "California Region"
+  ) +
+  scale_x_continuous(breaks = seq(2008, 2018, 2)) +
+  scale_color_viridis_d(option = "turbo") +
+  guides(color = guide_legend(nrow = 2)) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(size = 11, face = "bold")
+  )
+
+data_plot
+
+```
+## Revision: 
+
+#### What I did wrong: My plot had squished text, didn't match the original colors, and the legend order didn't match the line order in the plot.
+
+#### What I learned: Use base_size in theme_minimal() to increase overall text size. The viridis package provides colorblind-friendly palettes that can be expanded to 10+ colors. Use guides(color = guide_legend(nrow = 2)) to wrap legends for better readability. Use element_text() within theme() to customize specific text elements
+
+## Median Household Income vs. Childcare Costs for Infants
+
+<!-- See instructions for resources for refreshing your memory of linear regression! -->
+
+**8. Create a scatterplot showing the relationship between median household income (expressed in 2018 dollars) and the full-time median weekly price charged for center-based childcare for an infant in California. Overlay a linear regression line (lm) to show the trend.**
+
+```{r}
+#| label: scatterplot-median-income-vs-childcare-cost
+
+scatterplot <- ca_childcare |> 
+  ggplot(aes(x = mhi_2018, y = mc_infant)) + 
+  geom_point(color = "#E74C3C", alpha = 0.6, size = 2) + 
+  geom_smooth(method = lm, se = FALSE, color = "#3498DB", linewidth = 1) + 
+  labs(
+    title = "Relationship Between Median Household Income and Infant Childcare Costs",
+    subtitle = "California counties, 2008-2018",
+    x = "Median Household Income (2018 dollars)",
+    y = "Weekly Median Price for Infant Childcare"
+  ) + 
+  scale_x_continuous(labels = scales::dollar_format()) +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  theme_minimal(base_size = 11)
+
+scatterplot
+  
+  
+```
+## Revision: 
+
+#### What I did wrong: My axes didn't format currency values with dollar signs, making them less readable.
+
+#### Use scales::dollar_format() within scale_x_continuous() and scale_y_continuous() to automatically format axis labels as currency with dollar signs. This makes financial data much more readable and professional.
+
+
+**9. Look up the documentation for `lm()` and fit a linear regression model to the relationship shown in your plot above.**
+
+```{r}
+# complete the code provided
+reg_mod1 <- lm(mc_infant ~ mhi_2018, data = ca_childcare)
+summary(reg_mod1)
+```
+
+**10. Using the output from `summary()`, write out the estimated regression line (recall: $y = mx + b$).**
+
+### y = 2.241E-3(x) + 1.327E2
+
+## Revision: 
+
+#### What I did wrong: I wrote the equation without defining what x and y represent, making it meaningless without context.
+
+#### Improved: Predicted Weekly Infant Childcare Cost = $131.70 + $0.00224 × (Median Household Income); ŷ = 131.70 + 0.00224x
+
+#### What I learned: Always define variables in regression equations. Without context, "y = 2.241E-3(x) + 1.327E2" is just numbers. Including the interpretation makes the relationship meaningful and shows I understand what the coefficients represent.
+
+
+**11. Do you have evidence to conclude there is a relationship between the median household income and the median weekly cost of center-based childcare for infants in California? Cite values from your `summary()` output to support your claim!**
+
+### Yes, since the p-value (2.2E-16) < .05, we can conclude that there is strong statistical evidence that there is a relationship between median household income and median weekly cost of center-based childcare for infants in California. Additionally, the R-squared of .635 shows that median household income explains approximately 63.5%  of the variation in infant childcare costs. 
