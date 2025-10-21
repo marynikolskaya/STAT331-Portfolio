@@ -1,1 +1,18 @@
+---
+title: "Growth as a Data Scientist"
+format: html
+---
 
+[Describe 2-3 specific areas where you improved this quarter]
+
+## Area 1: [Skill/Concept Name]
+
+[Explain how you grew in this area. Reference a specific artifact that demonstrates this growth.]
+
+## Area 2: [Skill/Concept Name]
+
+[Explain your growth. Reference a specific artifact.]
+
+## Area 3: [Optional]
+
+[Continue if you have more areas of growth to discuss]
