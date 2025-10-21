@@ -1,1 +1,139 @@
+---
+title: "The Power of Efficiency"
+format: html
+---
 
+## What is Efficiency?
+
+In statistical computing and data science, **efficiency** means accomplishing tasks with minimal code repetition, optimal computational resources, and maximum clarity. Efficient code is not just about speed - it's about writing code that is concise, readable, maintainable, and scalable.
+
+Efficiency has multiple dimensions:
+- **Computational efficiency**: Using functions and methods that execute quickly
+- **Code efficiency**: Avoiding repetition through functions, loops, and vectorization  
+- **Cognitive efficiency**: Writing clear code that others (and future you) can understand quickly
+- **Workflow efficiency**: Using tools and practices that streamline the entire analysis process
+
+## What Does Efficiency Look Like?
+
+Efficient statistical computing involves:
+
+**Using pipelines instead of intermediate objects:**
+```r
+# Inefficient
+data1 <- filter(data, year == 2018)
+data2 <- select(data1, region, cost)
+data3 <- summarize(data2, mean_cost = mean(cost))
+
+# Efficient
+data |>
+  filter(year == 2018) |>
+  select(region, cost) |>
+  summarize(mean_cost = mean(cost))
+```
+
+**Using built-in functions instead of manual operations:**
+```r
+# Less efficient
+length(unique(teacher_id))
+
+# More efficient  
+n_distinct(teacher_id)
+```
+
+**Leveraging vectorization instead of loops:**
+```r
+# Inefficient
+for(i in 1:nrow(data)) {
+  data$new_col[i] <- data$old_col[i] * 2
+}
+
+# Efficient
+data <- data |> mutate(new_col = old_col * 2)
+```
+
+## What Does Efficiency Allow You To Do?
+
+Efficiency enables you to:
+
+1. **Scale your analyses**: Code that works for 100 rows will work for 1 million rows
+2. **Collaborate effectively**: Clear, concise code is easier for teammates to understand and build upon
+3. **Iterate quickly**: When code runs faster and is easier to modify, you can test more ideas
+4. **Avoid errors**: Less code means fewer opportunities for bugs
+5. **Focus on insights**: Spending less time wrestling with code means more time understanding results
+
+## Why Is Efficiency Important?
+
+Efficiency matters because:
+
+- **Time is valuable**: In professional settings, spending hours on a task that could take minutes is unacceptable
+- **Reproducibility requires clarity**: Efficient code is easier to review, debug, and reproduce
+- **Scalability is essential**: Inefficient code that works on small datasets may fail or take hours on larger datasets
+- **Maintainability matters**: You'll need to update and modify your analyses - efficient code makes this possible
+- **Collaboration depends on readability**: Your teammates need to understand your code
+
+As datasets grow larger and analyses become more complex, efficiency becomes not just a nice-to-have but a necessity. A data scientist who can't write efficient code will struggle in any real-world setting.
+
+## My "A-ha" Moments About Efficiency
+
+### A-ha Moment #1: Pipelines Transform Workflow (Lab 3)
+
+My first major efficiency revelation came in **Lab 3** when I needed to clean the teacher evaluations dataset. Instead of creating multiple intermediate objects, I used a single pipeline:
+```r
+teacher_evals_clean <- teacher_evals |> 
+  rename(sex = gender) |> 
+  filter(no_participants >= 10) |> 
+  mutate(
+    teacher_id = as.character(teacher_id),
+    academic_degree = as.factor(academic_degree),
+    sex = as.factor(sex)
+  ) |> 
+  select(course_id, teacher_id, question_no, no_participants, 
+         resp_share, SET_score_avg, percent_failed_cur, 
+         academic_degree, seniority, sex)
+```
+
+**The a-ha**: I realized that pipelines don't just save lines of code - they fundamentally change how I think about data transformation. Instead of thinking "create object A, then object B, then object C," I now think "take this data and put it through these transformations." This mental model is clearer and leads to better code organization.
+
+### A-ha Moment #2: Modern Tools Save Time and Effort (Lab 3)
+
+In **Lab 3, Question 8**, I needed to find rows with missing values across any column. Initially, I thought I'd need to check each column individually. Then I discovered `if_any()`:
+```r
+teacher_evals_clean |>
+  filter(if_any(
+    .cols = everything(), 
+    .fns = ~ is.na(.x)
+  ))
+```
+
+**The a-ha**: I realized that knowing modern tidyverse functions isn't just about being trendy - these functions exist because they solve common problems efficiently. Learning the tidyverse ecosystem meant I could accomplish in one line what might take 10 lines in base R. This was when I truly understood why we spent so much time learning tidyverse tools.
+
+### A-ha Moment #3: Pivoting Enables Elegant Solutions (Lab 4)
+
+The most profound efficiency moment came in **Lab 4** when working with childcare costs across years. I needed to compare 2008 and 2018 data side-by-side. My first instinct was to create separate datasets and manually combine them. Then I learned about `pivot_wider()`:
+```r
+ca_median_income <- ca_childcare |> 
+  filter(study_year %in% c(2008, 2018)) |> 
+  group_by(census_region, study_year) |>
+  summarize(median_income = median(mhi_2018)) |>
+  pivot_wider(names_from = study_year, 
+              values_from = median_income) |> 
+  arrange(desc('2018'))
+```
+
+**The a-ha**: This was the moment I understood that efficient data science isn't just about writing less code - it's about reshaping data into the structure that makes your analysis natural. The `pivot_*()` functions aren't just conveniences; they're fundamental tools that let you see data from different angles. This realization changed how I approach every data problem: instead of forcing my analysis to fit my data's structure, I now reshape data to fit the analysis I want to do.
+
+Later in the same lab, when creating visualizations, I used `pivot_longer()` to go the opposite direction:
+```r
+data_plot <- ca_childcare |> 
+  pivot_longer(
+    cols = c(mc_infant, mc_toddler, mc_preschool),
+    names_to = "age_group",
+    values_to = "price"
+  )
+```
+
+This made faceting by age group trivial, whereas with wide data it would have required three separate plots or complex workarounds.
+
+---
+
+These efficiency lessons fundamentally changed my approach to data science. I moved from viewing code as a series of individual commands to seeing it as a thoughtful workflow where each choice impacts readability, maintainability, and scalability. Understanding efficiency isn't just about making code run faster - it's about thinking more clearly about data and developing the judgment to choose the right tool for each task.
