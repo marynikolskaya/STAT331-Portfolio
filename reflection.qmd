@@ -1,6 +1,6 @@
 ---
 title: "STAT 331 Final Portfolio Reflection"
-author: "Your Name"
+author: "Marietta Nikolskaya"
 format: html
 execute:
   eval: false
@@ -8,64 +8,401 @@ execute:
 
 # Grade Earned
 
-I believe I have earned a grade of **[STATE YOUR GRADE HERE: A, A-, B+, B, etc.]** in STAT 331.
+I believe I have earned a grade of **B+** in STAT 331.
 
 ---
 
 # Learning Target Evidence
 
-## Learning Target 1: [Target Name]
+## Working with Data
 
-**Code Example:**
+### WD-1: Import data from various formats
 ```{r}
-# [Assignment Name - e.g., Lab 2 Question 1]
-
-# Paste your code here
+# Lab 3 - read_csv()
+teacher_evals <- read_csv("teacher_evals.csv")
 ```
+**Explanation:** This demonstrates my ability to import CSV files using `read_csv()` from the readr package, which is part of the tidyverse.
 
-**Explanation:** [Explain what this code demonstrates about your learning]
-
----
-
-## Learning Target 2: [Target Name]
-
-**Code Example:**
+### WD-2: Select necessary columns
 ```{r}
-# [Assignment Name]
-
-# Paste your code here
+# Lab 3 Question 5
+teacher_evals_clean <- teacher_evals |> 
+  select(course_id, teacher_id, question_no, no_participants, 
+         resp_share, SET_score_avg, percent_failed_cur, 
+         academic_degree, seniority, sex)
 ```
+**Explanation:** I used `select()` to keep only the relevant columns needed for analysis, removing unnecessary variables to streamline the dataset.
 
-**Explanation:** [Explain what this code demonstrates]
+### WD-3: Filter rows for various data types
+```{r}
+# Lab 5 - Filtering with multiple data types
+crime_scene_report <- crime_scene_report |>
+  filter(date == 20180115,          # numeric
+         type == "murder",           # character
+         city == "SQL City")         # character
+
+witness_2 <- person |>
+  filter(str_detect(name, "Annabel"),  # character with pattern
+         address_street_name == "Franklin Ave")
+```
+**Explanation:** This code shows my proficiency with filtering different data types including numeric dates, character strings, and using string pattern detection with `str_detect()`.
+
+### WD-4: Modify existing and create new variables
+```{r}
+# Lab 3 Question 5 - Type conversion and renaming
+teacher_evals_clean <- teacher_evals |> 
+  rename(sex = gender) |> 
+  mutate(teacher_id = as.character(teacher_id), 
+         course_id = as.character(course_id),
+         question_no = as.integer(question_no),
+         academic_degree = as.factor(academic_degree),
+         sex = as.factor(sex))
+```
+**Explanation:** I modified multiple variables by converting them to appropriate data types (character, integer, factor) to prepare the data for analysis.
+
+### WD-5: Use mutating joins ⭐ (Required for B)
+```{r}
+# Lab 5 - Complex three-way join
+final_suspect <- gym_jan9_suspect %>%
+  inner_join(person, by = c("person_id" = "id")) %>%
+  inner_join(car_suspect, by = c("license_id" = "id"))
+```
+**Explanation:** This demonstrates sophisticated use of `inner_join()` to combine three datasets (gym members, person records, and driver's licenses) using different join keys to solve the murder mystery.
+```{r}
+# Lab 4 Question 3 - Join with renamed columns
+ca_childcare <- ca_childcare |> 
+  left_join(tax_rev, by = c(
+    "county_name" = "entity_name", 
+    "study_year" = "year"
+  ))
+```
+**Explanation:** I used `left_join()` with renamed columns to merge tax revenue data with childcare data, matching on county name and year.
+
+### WD-7: Pivot datasets ⭐ (Required for A)
+```{r}
+# Lab 4 Question 5 - pivot_wider()
+ca_median_income <- ca_childcare |> 
+  filter(study_year %in% c(2008, 2018)) |> 
+  group_by(census_region, study_year) |>
+  summarize(median_income = median(mhi_2018)) |>
+  pivot_wider(names_from = study_year, 
+              values_from = median_income) |> 
+  arrange(desc('2018'))
+```
+**Explanation:** I pivoted data from long to wide format, creating separate columns for 2008 and 2018 median incomes by region.
+```{r}
+# Lab 4 Question 7 - pivot_longer()
+data_plot <- ca_childcare |> 
+  pivot_longer(
+    cols = c(mc_infant, mc_toddler, mc_preschool),
+    names_to = "age_group",
+    values_to = "price"
+  )
+```
+**Explanation:** I pivoted data from wide to long format to prepare it for visualization, combining three age group columns into one variable.
 
 ---
 
-[Continue for all learning targets...]
+## Reproducibility
+
+### R-1: Create reproducible analyses
+```{r}
+# Lab 2 - YAML header with execution options
+---
+title: "Lab 2: Exploring Rodents"
+author: "Marietta Nikolskaya"
+format: html
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+```
+**Explanation:** All my lab assignments used proper YAML headers, code chunk options, and organized structure to create professional, reproducible documents.
+
+### R-2: Write well-documented and tidy code
+```{r}
+# Lab 5 - Well-commented code
+# Finding witness 1 - lives at last house on Northwestern Dr
+witness_1 <- person %>% 
+  filter(address_street_name == "Northwestern Dr") %>%  
+  slice_max(address_number)
+
+# Finding witness 2 - named Annabel on Franklin Ave
+witness_2 <- person %>%
+  filter(str_detect(name, "Annabel"),
+         address_street_name == "Franklin Ave")
+```
+**Explanation:** My code throughout the quarter included clear comments explaining each step, used proper spacing and indentation, and followed tidyverse style conventions.
 
 ---
 
-# How I Met the Grade Criteria
+## Data Visualization & Summarization
 
-Based on the course syllabus, the criteria for a [YOUR GRADE] include:
+### DVS-1: Create visualizations for various variable types
+```{r}
+# Lab 2 - Scatterplot with numeric variables
+ggplot(data = surveys, 
+       aes(x = weight, y = hindfoot_length)) + 
+  geom_point(alpha = 0.4) + 
+  facet_wrap(~ species)
+```
+**Explanation:** I created visualizations for numeric continuous variables (weight, hindfoot length) using scatterplots with appropriate transparency to handle overplotting.
 
-1. **[Criterion 1 from syllabus]:** I met this by... [provide specific evidence and reference artifacts]
+### DVS-2: Use plot modifications ⭐ (Required for B)
+```{r}
+# Challenge 3 - Stacked bar plot with custom styling
+ggplot(teacher_evals_compare, aes(x = sen_level, fill = SET_level)) +
+  geom_bar(position = "fill") + 
+  geom_text(
+    aes(label = after_stat(count)),
+    stat = "count",
+    position = position_fill(vjust = 0.5),
+    color = "white",
+    size = 3.5
+  ) +
+  labs(
+    title = "Evaluation of Teachers' Use of Activities",
+    x = "Years of Experience",
+    y = NULL,  
+    fill = "Evaluation Rating"
+  ) +
+  scale_fill_manual(
+    values = c("excellent" = "#B19CD9", "standard" = "#C8A882")
+  ) +
+  theme_minimal() + 
+  theme(legend.position = "top")
+```
+**Explanation:** This plot demonstrates extensive modifications including custom colors, text labels with positioning, clear titles and labels, and theme customization to make the visualization clear and professional.
 
-2. **[Criterion 2 from syllabus]:** I demonstrated this through... [provide specific evidence]
+### DVS-3: Show creativity in visualizations ⭐ (Required for A)
+```{r}
+# Challenge 2 - Embedding legend in plot title using ggtext
+library(ggtext)
 
-3. **[Continue for all criteria]**
+ggplot(surveys, aes(x = weight, y = species, fill = sex)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(color = "grey45", alpha = 0.35, width = 0, height = 0.1) +
+  labs(
+    title = "Distribution of Body Weight by Species",
+    subtitle = paste0(
+      "Sex: ",
+      "<span style='color:#4C78A8;'>Male</span> • ",
+      "<span style='color:#E4572E;'>Female</span>"
+    ),
+    x = "Body Weight (grams)",
+    y = "Species"
+  ) +
+  scale_fill_manual(values = c("F" = "#E4572E", "M" = "#4C78A8")) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    plot.subtitle = element_markdown(size = 12),
+    panel.grid.minor = element_blank()
+  )
+```
+**Explanation:** This demonstrates creativity by embedding the legend directly into the plot subtitle using HTML styling and the ggtext package, eliminating the need for a separate legend and making the plot more elegant and easier to read.
+
+### DVS-4: Calculate numerical summaries
+```{r}
+# Lab 3 Question 7 - Multiple summary statistics
+teacher_evals_clean |> 
+  distinct(teacher_id, .keep_all = TRUE) |>
+  summarize(
+    min_seniority = min(seniority),
+    max_seniority = max(seniority),
+    mean_seniority = mean(seniority),
+    median_seniority = median(seniority)
+  )
+```
+**Explanation:** I calculated multiple numerical summaries (min, max, mean, median) to fully describe the distribution of instructor seniority.
+
+### DVS-5: Calculate summaries across groups ⭐ (Required for B)
+```{r}
+# Lab 3 Question 10
+teacher_evals_clean |>
+  filter(question_no == 901) |>
+  group_by(teacher_id) |>
+  summarize(
+    avg_rating = mean(SET_score_avg),  
+    num_courses = n_distinct(course_id)  
+  ) |>
+  filter(num_courses >= 5) |>
+  filter(
+    avg_rating == min(avg_rating) |
+    avg_rating == max(avg_rating)
+  )
+```
+**Explanation:** I grouped data by teacher_id and calculated average ratings and course counts for each instructor, then filtered to find the highest and lowest performers among those teaching at least 5 courses.
+
+### DVS-6: Create clear tables ⭐ (Required for B)
+```{r}
+# Lab 4 Question 5 - Clean summary table
+ca_median_income <- ca_childcare |> 
+  filter(study_year %in% c(2008, 2018)) |> 
+  group_by(census_region, study_year) |>
+  summarize(median_income = median(mhi_2018)) |>
+  pivot_wider(names_from = study_year, 
+              values_from = median_income) |> 
+  arrange(desc('2018'))
+```
+**Explanation:** This table is clearly structured with regions in rows, years in columns, and sorted by 2018 income for easy comparison across time and regions.
 
 ---
 
-# Additional Considerations
+## Program Efficiency
 
-[Optional: Add any other factors that support your grade request]
+### PE-1: Write concise code without repetition ⭐ (Required for B)
+```{r}
+# Lab 5 - Efficient pipeline without repetition
+mastermind <- woman_names %>% 
+  inner_join(concert, by = c("id.y" = "person_id"))
+```
+**Explanation:** Instead of writing separate filter and merge operations, I used efficient pipelines that combined operations, avoiding code repetition throughout my assignments.
+
+### PE-4: Use modern tools ⭐ (Required for B)
+```{r}
+# Lab 3 Question 8 - Using if_any() for missing values
+teacher_evals_clean |>
+  filter(if_any(
+    .cols = everything(), 
+    .fns = ~ is.na(.x)
+  ))
+```
+**Explanation:** I used modern tidyverse functions like `if_any()` with formula syntax instead of older base R approaches, demonstrating knowledge of current best practices.
+```{r}
+# Lab 3 - Using n_distinct() for unique counts
+teacher_evals_clean |> 
+  summarize(
+    unique_teachers = n_distinct(teacher_id),
+    unique_courses = n_distinct(course_id)
+  )
+```
+**Explanation:** I used `n_distinct()` instead of combining `length()` and `unique()`, showing familiarity with efficient modern tidyverse functions.
 
 ---
 
-# Supporting Artifacts
+## Data Simulation & Statistical Models
 
-The following assignments in my `artifacts` folder support this reflection:
+### DSSM-2: Conduct statistical analyses ⭐ (Required for B)
+```{r}
+# Challenge 3 - Chi-square test
+chisq.test(teacher_evals_compare$SET_level, 
+           teacher_evals_compare$sen_level)
 
-- [artifact1.qmd] - demonstrates [what it shows]
-- [artifact2.qmd] - demonstrates [what it shows]
-- [Continue listing...]
+# Result: X-squared = 10.207, df = 2, p-value = 0.006075
+```
+**Explanation:** I conducted a chi-square test of independence and properly interpreted the results, concluding that evaluation level and instructor seniority are not independent (p = 0.006 < 0.05).
+```{r}
+# Lab 4 Question 9 - Linear regression
+reg_mod1 <- lm(mc_infant ~ mhi_2018, data = ca_childcare)
+summary(reg_mod1)
+```
+**Explanation:** I fit a linear regression model to examine the relationship between median household income and infant childcare costs, then interpreted the output including the coefficient, p-value, and R-squared value.
+```{r}
+# Lab 2 - ANOVA
+species_mod <- aov(weight ~ species, data = surveys)
+summary(species_mod)
+```
+**Explanation:** I performed a one-way ANOVA to compare mean weights across 14 rodent species and drew appropriate conclusions based on the F-statistic and p-value.
+
+---
+
+# How I Met the Grade Criteria for B+
+
+## Learning Targets
+
+I have demonstrated **proficiency with all D-level targets** and **most B-level targets**:
+
+**D-level (all mastered):**
+- WD-1 through WD-4: Data import, selection, filtering, and manipulation ✅
+- R-1 and R-2: Reproducible, well-documented code ✅
+- DVS-4 and DVS-5: Numerical summaries and grouped summaries ✅
+
+**B-level (mastered):**
+- **WD-5**: Mutating joins demonstrated in Lab 5 (three-way join) and Lab 4 ✅
+- **WD-7**: Pivoting demonstrated in Lab 4 with both `pivot_wider()` and `pivot_longer()` ✅
+- **DVS-2**: Plot modifications shown extensively in Challenge 3 and Lab 4 ✅
+- **DVS-6**: Clear tables demonstrated in Lab 4 and Challenge 4 ✅
+- **PE-1**: Concise code throughout all assignments ✅
+- **PE-4**: Modern tools like `n_distinct()`, `if_any()`, and lubridate functions ✅
+- **DSSM-2**: Statistical analyses including chi-square, linear regression, and ANOVA ✅
+
+**B-level (gaps):**
+- **PE-2**: Writing custom functions - *I do not have strong evidence of this target*
+- **DSSM-1**: Data simulation - *I do not have strong evidence of this target*
+
+**A-level (partial evidence):**
+- **DVS-3**: Creative visualizations shown in Challenge 2 with embedded legend ✅
+- **WD-7**: Pivoting (also an A requirement) ✅
+- **PE-3**: Iteration - *No evidence*
+- **DVS-7**: Creative tables - *No evidence*
+
+## Revising Thinking
+
+I submitted revisions for **more than half** of my assignments throughout the quarter. My revision process included:
+
+- **Lab 3 revisions**: Fixed issues with code formatting (keeping lines under 80 characters), improved use of functions like `if_any()` with proper syntax, and enhanced data descriptions with context about when/where/how data were collected
+- **Challenge 3 revisions**: Added percentage labels to my stacked bar plot, improved statistical interpretation to include context about what Question 3 measured, and removed inappropriate use of headers for question responses
+- **Reflections included**: For each revision, I documented what I did wrong, what I learned, and why my new approach was better
+
+My reflections demonstrated understanding of not just *what* to fix, but *why* the changes improved my code. I learned from feedback and avoided repeating the same mistakes in future assignments.
+
+## Extending Thinking
+
+I **occasionally** pushed myself beyond the basic requirements:
+
+- **Challenge 2**: I completed the "Hot" option (most difficult), embedding the legend in the plot title using HTML and the ggtext package - going beyond standard ggplot skills
+- **Lab 4 Challenge**: I created a lollipop plot in addition to the required visualizations to better show cost differences
+- **Challenge 3**: Added custom text labels with `after_stat(count)` to make my stacked bar plot more informative
+
+While I attempted more difficult challenges occasionally, I recognize I could have pushed myself more consistently throughout the quarter.
+
+## Collaborative Group Member
+
+Throughout the quarter, I was **patient and respectful** when collaborating with partners during Practice Activities. I:
+
+- Followed the collaborative protocol by switching between Typer and Talker roles as instructed
+- Communicated clearly with my partners about approach and reasoning
+- Was open to different ideas and approaches to solving problems
+- **However**, I acknowledge I sometimes performed tasks outside my assigned role rather than strictly adhering to the Typer/Talker structure
+
+My collaboration was generally good, but I recognize there's room for improvement in following protocol more strictly.
+
+## Peer-Code Review
+
+I provided peer code reviews **most weeks**, offering:
+
+- **Specific feedback** on code formatting, function usage, and documentation
+- **Constructive suggestions** for improvement that were honest and kind
+- **Demonstrations** of alternative approaches when appropriate
+
+My reviews showed genuine desire to help classmates improve and grow as data scientists.
+
+---
+
+# Supporting Artifacts in This Portfolio
+
+1. **Lab 5 (Murder in SQL City)** - Demonstrates WD-5 (joins), WD-3 (filtering), R-2 (documentation)
+2. **Lab 3 (Student Evaluations - REVISED)** - Demonstrates WD-1 through WD-4, DVS-4, DVS-5, PE-1, PE-4
+3. **Challenge 3 (Chi-Square Analysis - REVISED)** - Demonstrates DVS-2 (plot modifications), DSSM-2 (statistical analysis)
+4. **Lab 4 (Childcare Costs)** - Demonstrates WD-5 (joins), WD-7 (pivoting), DVS-2, DSSM-2
+5. **Lab 4 Challenge** - Demonstrates DVS-3 (creative lollipop plot)
+6. **Lab 2 (Rodents)** - Demonstrates DVS-1, DVS-2, DSSM-2
+7. **Challenge 2 (ggplot2 Spice - REVISED)** - Demonstrates DVS-3 (creative visualization with embedded legend)
+
+---
+
+# Justification for B+ Rather Than B
+
+While I am missing evidence for two B-level targets (PE-2: functions and DSSM-1: simulation), I believe my work merits a B+ because:
+
+1. **I exceeded B requirements in some areas**: My proficiency with WD-7 (pivoting) and DVS-3 (creative visualizations) are A-level targets that I have demonstrated well
+
+2. **Quality of work**: My revised assignments show deep understanding, with thoughtful reflections on my learning process
+
+3. **Strong performance on most B targets**: I demonstrated proficiency in 7 out of 9 B-level targets, with particularly strong evidence for joins, pivoting, plot modifications, and statistical analyses
+
+4. **Revision effort**: I submitted thoughtful revisions with genuine reflection on my growth, meeting the B-level criterion of "submitting revisions for most assignments with reflections"
+
+I recognize that without evidence of writing functions (PE-2) and data simulation (DSSM-1), I do not fully meet all B criteria. However, my strengths in other areas, including some A-level targets, support a B+ grade as representing my overall achievement in the course.
