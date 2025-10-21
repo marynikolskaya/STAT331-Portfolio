@@ -365,9 +365,8 @@ Throughout the quarter, I was **patient and respectful** when collaborating with
 - Followed the collaborative protocol by switching between Typer and Talker roles as instructed
 - Communicated clearly with my partners about approach and reasoning
 - Was open to different ideas and approaches to solving problems
-- **However**, I acknowledge I sometimes performed tasks outside my assigned role rather than strictly adhering to the Typer/Talker structure
 
-My collaboration was generally good, but I recognize there's room for improvement in following protocol more strictly.
+My collaboration was generally good, but I recognize there's always room for improvement.
 
 ## Peer-Code Review
 
@@ -377,7 +376,7 @@ I provided peer code reviews **most weeks**, offering:
 - **Constructive suggestions** for improvement that were honest and kind
 - **Demonstrations** of alternative approaches when appropriate
 
-My reviews showed genuine desire to help classmates improve and grow as data scientists.
+My reviews showed genuine desire to help classmates improve and grow as data scientists and statisticians.
 
 ---
 
