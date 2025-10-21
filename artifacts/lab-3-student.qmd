@@ -1,0 +1,308 @@
+---
+title: "Lab 3: Student Evaluations of Teaching"
+author: "Marietta Nikolskaya"
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    warning: false
+    embed-resources: true
+editor: source
+---
+
+In this lab, we will be using the `dplyr` package to explore student evaluations
+of teaching data. **You are expected to use functions from `dplyr` to do your data manipulation!**
+
+<!-- See instructions for words of advice on completing the assignment! -->
+
+## The Data
+
+The `teacher_evals` dataset contains student evaluations of reaching (SET)
+collected from students at a University in Poland. There are SET surveys from 
+students in all fields and all levels of study offered by the university.
+
+The SET questionnaire that every student at this university completes is as
+follows:
+
+> Evaluation survey of the teaching staff of University of Poland. Please
+> complete the following evaluation form, which aims to assess the lecturer’s
+> performance. Only one answer should be indicated for each question. The
+> answers are coded in the following way: 5 - I strongly agree; 4 - I agree;
+> 3 - Neutral; 2 - I don’t agree; 1 - I strongly don’t agree.
+>
+> Question 1: I learned a lot during the course.
+>
+> Question 2: I think that the knowledge acquired during the course is very
+> useful.
+>
+> Question 3: The professor used activities to make the class more engaging.
+>
+> Question 4: If it was possible, I would enroll for a course conducted by this
+> lecturer again.
+>
+> Question 5: The classes started on time.
+>
+> Question 6: The lecturer always used time efficiently.
+>
+> Question 7: The lecturer delivered the class content in an understandable and
+> efficient way.
+>
+> Question 8: The lecturer was available when we had doubts.
+>
+> Question 9. The lecturer treated all students equally regardless of their
+> race, background and ethnicity.
+
+These data are from the end of the winter semester of the 2020-2021 academic
+year. In the period of data collection, all university classes were entirely
+online amid the COVID-19 pandemic. While expected learning outcomes were not
+changed, the online mode of study could have affected grading policies and could
+have implications for data.
+
+**Average SET scores** were combined with many other variables, including:
+
+1.  **characteristics of the teacher** (degree, seniority, gender, SET scores in
+the past 6 semesters).
+2.  **characteristics of the course** (time of day, day of the week, course
+type, course breadth, class duration, class size).
+3.  **percentage of students providing SET feedback.**
+4.  **course grades** (mean, standard deviation, percentage failed for the
+current course and previous six semesters).
+
+This rich dataset allows us to **investigate many of the biases in student evaluations of teaching** that have been reported in the literature and to formulate new
+hypotheses.
+
+Before tackling the problems below, study the description of each variable
+included in the `teacher_evals_codebook.pdf` inside the "resources" folder.
+
+**1. Load the appropriate R packages for your analysis.**
+*Hint: The ggplot2 package and the readr package can both be loaded with the tidyverse package.*
+
+```{r}
+#| label: packages
+library(tidyverse)
+
+
+```
+
+**2. Load in the `teacher_evals` data.** 
+*Hint: You should use the `here()` function from the __here__ package!*
+
+```{r}
+#| label: load-data
+teacher_evals <- read_csv("teacher_evals.csv")
+teacher_evals
+```
+
+### Data Inspection + Summary
+
+**3. Provide a brief overview (~4 sentences) of the dataset.**
+
+```{r}
+#| label: explore-data
+# you may want to use code to answer this question
+glimpse(teacher_evals)
+
+```
+### The dataset contains 8,015 course evals with 27 variables. Each row represents a course section evaluated by students using a 9-question survey. The responses are on a 5-point scale which is averaged to produce SET scores. This dataset includes characters, floating point number or doubles.  
+
+## Revision:
+
+### What I did wrong: My description only mentioned the structure (rows, columns, data types) without providing important context about where, when, how, and why the data were collected.
+
+### Revision: The teacher evaluations dataset contains 8,015 student evaluation records from a university in Poland, collected at the end of the winter semester 2020-2021. During this period, all classes were conducted entirely online due to the COVID-19 pandemic. Students completed a 9-question survey rating their instructors on a 5-point scale, with responses averaged to produce SET (Student Evaluation of Teaching) scores. The dataset includes instructor characteristics (degree, seniority, gender) and course features (class size, timing, grading patterns) to investigate potential biases in teaching evaluations.
+
+### What I learned: A data description should provide context about the who, what, when, where, why, and how of data collection, not just the technical structure. Understanding this context is essential for accurate interpretation and inference.
+
+**4. What is the unit of observation (i.e. a single row in the dataset) identified by?**
+
+```{r}
+#| label: row-identification
+# you may want to use code to answer this question
+teacher_evals_clean1 <- teacher_evals|>
+  group_by(course_id, teacher_id, question_no) |>
+  summarize(n = n(), .groups = "drop") |>
+  filter(n > 1)
+teacher_evals_clean1
+
+```
+### Each row represents a course section evaluated by students using a 9-question survey measuring teaching effectiveness, with responses on a 5-point scale which is then combined into average SET scores. 
+
+## Revision: 
+
+### What I did wrong: I correctly identified the unit of observation conceptually but didn't provide code to verify this claim.
+
+### What I learned: I should always verify claims with code rather than just stating them. Using group_by() and counting can confirm whether variable combinations uniquely identify rows.
+
+
+
+**5. Use _one_ `dplyr` pipeline to clean the data by:**
+
+- **renaming the `gender` variable `sex`**
+- **removing all courses with fewer than 10 respondents**
+- **changing data types in whichever way you see fit (e.g., is the instructor ID really a numeric data type?)**
+- **only keeping the columns we will use -- `course_id`, `teacher_id`, `question_no`, `no_participants`, `resp_share`, `SET_score_avg`, `percent_failed_cur`, `academic_degree`, `seniority`, and `sex`**
+
+**Assign your cleaned data to a new variable named `teacher_evals_clean` –- use these data going forward.**
+
+```{r}
+#| label: data-cleaning
+teacher_evals_clean <- teacher_evals|> 
+  rename(sex = gender) |> 
+  filter(no_participants >= 10) |> 
+  mutate(teacher_id = as.character(teacher_id), 
+         course_id = as.character(course_id),
+         question_no = as.integer(question_no),
+         academic_degree = as.factor(academic_degree),
+         sex = as.factor(sex)) |> 
+  select(course_id, teacher_id, question_no, no_participants, resp_share, SET_score_avg, percent_failed_cur, academic_degree, seniority, sex)
+teacher_evals_clean
+
+```
+
+**6. How many unique instructors and unique courses are present in the cleaned dataset?**
+
+```{r}
+#| label: unique-courses
+teacher_evals_clean |> 
+  summarize(
+    unique_teachers = n_distinct(teacher_id),
+    unique_courses = n_distinct(course_id))
+
+```
+
+### 297 unique teachers and 939 unique courses
+
+## Revision: 
+
+### What I did wrong: My code line was too long (over 80 characters), making it hard to read.
+
+### What I learned: Code should have line breaks after pipes (|>) and commas to keep lines under 80 characters. This improves readability and follows professional coding standards.
+
+**7. What are the demographics of the instructors in this study? Investigate the variables `academic_degree`, `seniority`, and `sex` and summarize your findings in ~3 complete sentences.**
+
+```{r}
+#| label: exploring-demographics-of-instructors
+teacher_evals_clean |> 
+  distinct(teacher_id, .keep_all = TRUE) |>
+  count(academic_degree) |>
+  mutate(proportion = n / sum(n))
+
+teacher_evals_clean |> 
+  distinct(teacher_id, .keep_all = TRUE) |>
+  count(sex) |>
+  mutate(proportion = n / sum(n))
+
+teacher_evals_clean |> 
+  distinct(teacher_id, .keep_all = TRUE) |>
+  summarize(
+    min_seniority = min(seniority),
+    max_seniority = max(seniority),
+    mean_seniority = mean(seniority),
+    median_seniority = median(seniority)
+  )
+
+```
+### The majority of instructors in this study hold doctoral degrees, followed by master's degrees, with only 14% having no graduate degree. The instructor sample is relatively balanced by gender, with 54% male and 46% female instructors. Instructors' teaching experience ranges from 1 to 11 years, with a median of 4 years and a mean of approximately 5 years, which indicates that the sample includes both relatively new and experienced instructors.
+
+**8. One teacher-course combination has some missing values, coded as `NA`. Which instructor has these missing values? Which course? What variable are the missing values in?**
+
+```{r}
+#| label: uncovering-missing-values
+teacher_evals_clean |>
+  filter(if_any(
+    .cols = everything(), 
+    .fns = ~ is.na(.x)))
+
+```
+### Instructor with the id of 56346 has the missing values in the column "percent_failed_cur" for the course PAB3SE004PA. 
+
+## Revision: 
+
+### What I did wrong: While my code worked, I didn't use proper function syntax with named arguments for if_any().
+
+### What I learned: The if_any() function takes .cols and .fns as named arguments. Using the formula syntax ~ is.na(.x) is more explicit and follows tidyverse conventions. Named arguments make code more readable and self-documenting.
+
+
+**9. Each course seems to have used a different subset of the nine evaluation questions. How many teacher-course combinations asked all nine questions?**
+
+```{r}
+#| label: teacher-course-asked-every-question
+
+teacher_evals_clean |>
+  group_by(teacher_id, course_id) |>
+  summarize(num_questions = n()) |>
+  filter(num_questions == 9) |> 
+  nrow()
+```
+### There are 49 teacher-course combinations that asked all 9 questions 
+
+## Rate my Professor
+
+**10. Which instructors who had _at least five_ courses reviewed in the data had the highest and lowest average rating for Question 1 (I learnt a lot during the course.) across all their courses?**
+
+```{r}
+#| label: question-1-high-low
+
+teacher_evals_clean |>
+  filter(question_no == 901) |>
+  group_by(teacher_id) |>
+  summarize(
+    avg_rating = mean(SET_score_avg),  
+    num_courses = n_distinct(course_id)  
+  ) |>
+  filter(num_courses >= 5) |>  
+  filter(
+    avg_rating == min(avg_rating) |
+      avg_rating == max(avg_rating)
+  )
+teacher_evals_clean
+
+```
+### teacher 51356 had the lowest average rating for question 1 while teacher 54605 had the highest across all their courses. 
+
+## Revision (for question 10, 11, 12)
+
+### What I did wrong: My code only returned the single highest and lowest values, but there could be multiple instructors tied at those values.
+
+### What I learned: Using slice(c(1, n())) only returns one row for min and max, missing potential ties. Using filter() with min() and max() returns all rows that match the extreme values. Also, for Q12, I should use %in% c("dr", "prof") to check for doctors OR professors, not just doctors.
+
+**11. Which instructors with one year of experience had the highest and lowest average percentage of students failing in the current semester across all their courses?**
+
+```{r}
+#| label: one-year-experience-failing-students
+teacher_evals_clean |>
+  filter(seniority == 1) |>
+  group_by(teacher_id) |>
+  summarize(
+    avg_rating = mean(percent_failed_cur)) |>
+  filter(
+    avg_rating == min(avg_rating) |
+      avg_rating == max(avg_rating)
+  )
+
+
+
+```
+### teacher 106692 had the highest average percent of student failing while teacher 102379 had the lowest. 
+
+**12. Which instructor(s) with either a doctorate or professor degree had the highest and lowest average percent of students responding to the evaluation across all their courses? Include how many years the instructor had worked (seniority) and their sex in your output.**
+
+```{r}
+#| label: female-instructor-student-response
+
+teacher_evals_clean |>
+  filter(academic_degree %in% c("dr")) |>
+  group_by(teacher_id) |>
+  summarize(
+    avg_response = mean(resp_share),
+    seniority = first(seniority),
+    sex = first(sex)
+  ) |>
+  filter(
+    avg_response == min(avg_response) |
+      avg_response == max(avg_response)
+  )
+
+
+```
+### Instructor 59338 had the lowest average reponse and has a seniority of 3 and is a female. While instructor 101508 had the largest average response with a seniority of 1 and is a female. 
