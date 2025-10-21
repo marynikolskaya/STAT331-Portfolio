@@ -3,16 +3,63 @@ title: "Growth as a Data Scientist"
 format: html
 ---
 
-[Describe 2-3 specific areas where you improved this quarter]
+Throughout STAT 331, I experienced significant growth in three key areas: data wrangling with joins, creating professional visualizations, and understanding when and how to revise my work based on feedback.
 
-## Area 1: [Skill/Concept Name]
+## Area 1: Mastering Complex Data Joins
 
-[Explain how you grew in this area. Reference a specific artifact that demonstrates this growth.]
+At the beginning of the quarter, I understood basic data manipulation with `filter()` and `select()`, but joining multiple datasets felt intimidating. By the time I completed **Lab 5 (Murder in SQL City)**, I had developed confidence in using complex joins to solve real-world problems.
 
-## Area 2: [Skill/Concept Name]
+The breakthrough moment came when I successfully combined three datasets to identify the murder suspect:
+```r
+final_suspect <- gym_jan9_suspect %>%
+  inner_join(person, by = c("person_id" = "id")) %>%
+  inner_join(car_suspect, by = c("license_id" = "id"))
+```
 
-[Explain your growth. Reference a specific artifact.]
+This code demonstrates my growth because it required me to:
+- Understand how different tables relate to each other conceptually
+- Choose the appropriate join keys when column names didn't match
+- Chain multiple joins together in a logical sequence
 
-## Area 3: [Optional]
+Earlier in the quarter, I would have struggled to visualize how these datasets connected. By Week 5, I could confidently navigate complex relational data structures. This skill has fundamentally changed how I approach data analysis - I now see datasets as interconnected pieces of a puzzle rather than isolated tables.
 
-[Continue if you have more areas of growth to discuss]
+## Area 2: Creating Publication-Quality Visualizations
+
+My visualizations evolved dramatically from basic plots to professional, publication-ready graphics. **Challenge 2** showcases this growth through my implementation of an embedded legend using the ggtext package.
+
+Instead of a standard legend separate from the plot, I embedded the color coding directly in the subtitle:
+```r
+labs(
+  subtitle = paste0(
+    "Sex: ",
+    "<span style='color:#4C78A8;'>Male</span> • ",
+    "<span style='color:#E4572E;'>Female</span>"
+  )
+)
+```
+
+This demonstrates growth in:
+- **Technical skills**: Learning to use HTML styling within R and discovering new packages
+- **Design thinking**: Understanding that eliminating legends reduces cognitive load for readers
+- **Creativity**: Moving beyond default ggplot options to create more elegant solutions
+
+Early in the quarter, I focused on making plots that "worked." By the end, I was thinking critically about visual design principles and reader experience. I learned that small details - like removing unnecessary legends, choosing accessible colors, and adding informative labels - make the difference between adequate and excellent visualizations.
+
+## Area 3: Developing a Growth Mindset Through Revision
+
+Perhaps my most significant growth wasn't in any specific coding skill, but in how I approached learning itself. My revisions for **Lab 3** and **Challenge 3** illustrate this transformation.
+
+In my Lab 3 revision, I didn't just fix the code - I reflected deeply on *why* my original approach was problematic:
+
+> "What I did wrong: My description only mentioned the structure (rows, columns, data types) without providing important context about where, when, how, and why the data were collected. What I learned: A data description should provide context about the who, what, when, where, why, and how of data collection, not just the technical structure."
+
+This type of reflection shows that I moved from seeing revisions as "fixing mistakes" to viewing them as opportunities for deeper understanding. I began to:
+- Anticipate common errors before making them
+- Understand the *reasoning* behind coding best practices
+- Apply lessons from one assignment to future work
+
+By the end of the quarter, I was catching potential issues before submitting assignments because I had internalized the feedback from earlier revisions. This growth mindset will serve me far beyond STAT 331.
+
+---
+
+These three areas of growth - technical proficiency with joins, attention to visualization quality, and reflective learning - represent my transformation from someone who could write functional code to someone who writes excellent, thoughtful, professional data science work.
