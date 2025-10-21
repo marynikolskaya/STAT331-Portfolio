@@ -1,0 +1,134 @@
+---
+title: "Challenge 3: Extending Teaching Evaluation Investigations"
+author: "Marietta Nikolskaya"
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    warning: false
+    embed-resources: true
+editor: source
+---
+
+```{r}
+#| label: packages
+library(tidyverse)
+
+```
+
+```{r}
+#| label: load-data
+teacher_evals <- read_csv("teacher_evals.csv")
+teacher_evals
+
+```
+
+
+# Chi-Square Test of Independence
+
+Let’s compare the level of SET ratings for Question 3 (The professor used activities to make the class more engaging.) between senior instructors and junior instructors.
+
+**1. Using the original `teacher_evals` dataset (not `teacher_evals_clean`), create a new dataset that accomplishes the following with *one*`dplyr` pipeline:**
+
+-   **includes responses for Question 3 only**
+-   **creates a new variable called `SET_level` that is “excellent” if the `SET_score_avg` is 4 or higher (inclusive) and “standard” otherwise**
+-   **creates a new variable called `sen_level` that is “junior” if `seniority` is 4 or less (inclusive) and “senior” otherwise**
+-   **contains only the variables we are interested in –- `course_id`, `SET_level`, and `sen_level`**
+-   **saves the mutated data into a new object named `teacher_evals_compare`.**
+
+::: callout-tip
+Helpful functions: `filter()`, `mutate()`, `if_else()`, `select()`
+:::
+
+```{r}
+#| label: cleaning-data-for-junior-senior-comparison
+teacher_evals_compare <- teacher_evals |>
+  filter(question_no == 903) |>
+  mutate(
+    SET_level = if_else(SET_score_avg >= 4, "excellent", "standard"),
+    sen_level = case_when(
+      seniority <= 4 ~ "junior",
+      seniority >= 5 & seniority <= 8 ~ "senior",
+      seniority > 8 ~ "very senior"
+    )
+  ) |>
+  select(course_id, SET_level, sen_level)
+
+```
+
+**2. Using the new dataset and your `ggplot2` skills, recreate the following bar plot:**
+
+![](https://atheobold.github.io/groupworthy-data-science/labs/instructions/images/challenge-3-plot-to-recreate.png)
+
+```{r}
+#| label: recreate-plot
+ggplot(teacher_evals_compare, aes(x = sen_level, fill = SET_level)) +
+  geom_bar(position = "fill") + 
+  geom_text(
+    aes(label = after_stat(count)),
+    stat = "count",
+    position = position_fill(vjust = 0.5),
+    color = "white",
+    size = 3.5
+  ) +
+  labs(
+    title = "Evaluation of Teachers' Use of Activities",
+    x = "Years of Experience",
+    y = NULL,  
+    fill = "Evaluation Rating"
+  ) +
+  scale_fill_manual(
+    values = c("excellent" = "#B19CD9", "standard" = "#C8A882")
+  ) +
+  theme_minimal() + 
+  theme(legend.position = "top")
+
+```
+## Revision 
+
+### What I did wrong: My plot was missing percentage labels on the bars, which would help readers quickly understand the proportions.
+
+### What I learned: Using geom_text() with position_fill() adds labels to stacked bar plots. The after_stat() function accesses computed statistics from ggplot layers. Adding percentage labels makes proportional comparisons much clearer for readers.
+
+**3. Look up the documentation for `chisq.test()` to carry out a chi-square test of independence between the SET level and instructor seniority level in your new dataset.**
+
+```{r}
+#| label: chi-square-test
+
+chisq.test(teacher_evals_compare$SET_level, teacher_evals_compare$sen_level)
+
+```
+
+**4. Draw a conclusion about the independence of evaluation level and seniority level based on your chi-square test.**
+
+### There is statistically significant evidence that evaluation level and instructor seniority level are not independent. In other words there is a relationship between how long an instructor has been teaching and whether they recieve excellent vs standard ratings on question 3 as seen by the p-value = .006 < .05. 
+
+## Revision 
+
+### What I did wrong: I didn't mention what Question 3 actually measured, making my conclusion less meaningful without referring back to the introduction.
+
+### Improved: There is statistically significant evidence (χ² = 10.207, df = 2, p = 0.006) that evaluation level and instructor seniority level are not independent. Specifically, the relationship between an instructor's years of experience and whether they receive excellent versus standard ratings on Question 3 ("The professor used activities to make the class more engaging") suggests that seniority is associated with how students perceive instructors' use of engaging activities. The low p-value (p < 0.05) indicates this relationship is unlikely to be due to chance alone.
+
+### What I learned: Always provide context about what variables measure in conclusions. Simply referencing "Question 3" without explaining what it asks forces readers to search back through the document. A complete conclusion should be self-contained and interpretable on its own. 
+
+# Study Critique
+
+Part of the impetus behind this study was to investigate characteristics of a course or an instructor that might affect student evaluations of teaching that are **not** explicitly related to teaching effectiveness. For instance, it has been shown that gender identity and gender express affect student evaluations of teaching ([an example](https://link.springer.com/article/10.1007/s10755-014-9313-4?nr_email_referer=1)).
+
+**5. If you were to conduct this study at Cal Poly, what are two other variables you would like to collect that you think might be related to student evaluations? These should be course or instructor characteristics that [were not]{.underline} collected in this study.**
+
+### I would add native vs. non-native english speaker as a categorical variable to evaluate whether language profficiency effects ratings. I also would add a variable to describe the type of class the instructor is teaching. In other words, are they teaching a lab, lecture, lab/lecture, asynch class...etc.
+
+## Revision (question 5 and 6)
+
+### What I did wrong: I used headers for my responses to questions 5 and 6, which made the document structure confusing and suggested these were major sections rather than question responses.
+
+### Improved (question 5): I would add native vs. non-native English speaker as a categorical variable to evaluate whether language proficiency affects ratings. I also would add a variable to describe the type of class format the instructor is teaching (lab, lecture, lab/lecture, asynchronous online, etc.).
+
+### Improved (question 6): I would expect to see a positive relationship between language proficiency and rating—as language proficiency increases, ratings would likely increase as well, since clearer communication typically enhances learning experiences. I would also expect lab classes to receive higher ratings than traditional lectures, as hands-on, interactive formats tend to be more engaging than passive lecture-based instruction, which students may perceive as more mundane or monotonous.
+
+### What I learned: Headers should be reserved for major document sections, not individual question responses. Using bold text for the question number/prompt is sufficient. Over-using headers fragments the document and disrupts the reading flow.
+
+**6. Explain what effects / relationships you would expect to see for each of the two variables you outlined.**
+
+### I would expect to see a positive relationship between language profficiency and rating. In other words as language profficiency increases so do ratings and vice versa. I would also expect lab classes to get the best ratings as they are hands-on and "fun" while lecture would recieve lower ratings as it can be generally considered more mundane or stagnant.  
