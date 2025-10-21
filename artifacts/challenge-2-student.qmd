@@ -1,0 +1,235 @@
+---
+title: "Challenge 2: Spicing things up with ggplot2"
+author: "Marietta Nikolskaya"
+format: html
+editor: source
+embed-resources: true
+code-tools: true
+---
+
+For this week's Challenge, you will have two different options to explore.
+I've arranged these options in terms of their "spiciness," or the difficulty of 
+completing the task. **You are only required to complete one task, but if you are interested in exploring more than one, feel free!**
+
+This is a great place to let your creativity show! Make sure to indicate what
+additional touches you added, and provide any online references you used.
+
+# Directions
+
+For this week's Challenge, you will have two different options to explore.
+I've arranged these options in terms of their "spiciness," or the difficulty of 
+completing the task. **You are only required to complete one task, but if you are interested in exploring more than one, feel free!**
+
+This is a great place to let your creativity show! Make sure to indicate what
+additional touches you added, and provide any online references you used.
+
+::: callout-tip
+For this challenge you will be modifying the code you wrote for Lab 2 -- we will
+be modifying the box plot of weights by species!
+:::
+
+# Data
+
+In the code chunk below, load in the packages and data necessary for this 
+analysis. *Hint: You should be able to copy and paste the set-up code from your Lab 2!*
+```{r}
+library(tidyverse)     
+library(dplyr)
+library(ggplot2)
+
+#| label: data-packages
+surveys <- read_csv("surveys.csv")
+glimpse(surveys)
+
+```
+
+
+# Medium: Exploring Colors
+
+The built-in `ggplot()` color scheme may not include the colors you were looking
+for. Don't worry -- there are many other color palettes available to use!
+
+You can change the colors used by `ggplot()` in a few different ways.
+
+### Manual Specification
+
+Add the `scale_color_manual()` or `scale_fill_manual()` functions to your plot
+and directly specify the colors you want to use. You can either:
+
+1.  define a vector of colors within the `scale` functions (e.g.
+`values = c("blue", "black", "red", "green")`) OR
+
+2.  create a vector of colors using hex numbers and store that vector as a
+variable. Then, call that vector in the `scale_color_manual()` function.
+
+### Package Specification
+
+While manual specification may be useful for some contexts, it can be a 
+real pain to handpick 5+ colors. This is where color scales built-in to R
+packages come in handy! Popular packages for colors include:
+
+-   `RColorBrewer` -- change colors by using `scale_fill_brewer()` or `scale_colour_brewer()`.
+
+-   `viridis` -- change colors by using `scale_colour_viridis_d()` for discrete
+data, `scale_colour_viridis_c()` for continuous data.
+
+-   `ggsci` -- change colors by using `scale_color_<PALNAME>()` or
+`scale_fill_<PALNAME>()`, where you specify the name of the palette you wish to
+use (e.g. `scale_color_aaas()`).
+
+> **For this challenge you are expected to use this information to modify the boxplots you created Lab 2. First, you are to color the boxplots based on the variable `sex`. Next, you are to change the colors used for `sex` using either manual color specification or any of the packages listed here (or others!).**
+
+```{r}
+#| label: medium-option-colors
+library(RColorBrewer)
+
+ggplot(data = surveys, 
+       aes(x = weight, y = species, fill = sex)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(color = "steelblue", alpha = 0.4) +
+  labs(x = "Body Weight (grams)", 
+       y = "Species", 
+       title = "Distribution of Body Weight by Species") +
+  scale_fill_brewer(palette = "Set1")
+
+```
+
+
+# Spicy: Exploring Themes
+
+Themes are another vital component to creating clear plots. During lecture, 
+Dr. Theobold mentioned that they like using `theme_bw()` for a built-in theme, 
+since it has a white background and easy to see grid lines. However, there are 
+SO many more ways you can control the appearance of a plot using the `theme()`
+function. 
+
+> **For this challenge you are expected to use the `theme()` function to modify at least two aspects of your plot, with the goal of making your plot clearer to the reader. You need to *explain why* you made the decisions you did.**
+
+Some ideas you might consider:
+
+- changing the size of the font to make your plot titles more readable
+- changing the font in your plot to be your favorite font 
+(remember it needs to **improve** the plot ;) )
+- removing the minor grid lines (since they can be a bit distracting)
+- adjust spacing between axis title and labels
+- remove axis ticks
+- add borders to the plot
+
+```{r}
+#| label: spicy-option-theme
+
+ggplot(data = surveys, 
+       aes(x = weight, y = species, fill = sex)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(color = "steelblue", alpha = 0.4) +
+  labs(x = "Body Weight (grams)", 
+       y = "Species", 
+       title = "Distribution of Body Weight by Species") +
+  scale_fill_manual(values = c("male" = "#1f78b4", "female" = "#e31a1c")) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),   
+    panel.grid.minor = element_blank()
+
+  )
+```
+
+
+# Hot: Embedding the Legend in the Plot Title
+
+Some data scientists advocate that we should try to eliminate legends from our
+plots to make them more clear. Legends cause a reader's eye to stray from the
+plot, which can make it more difficult to understand. There are a few ways to 
+do this, but this week we're going to explore how to embed the legend in the 
+plot title.
+
+## Embedding Legend in Plot Title
+
+The **ggtext** package allows you to add hex colors and other HTML elements 
+(e.g., italics, boldface) to plot titles. The process involves two main steps:
+
+1. Wrap your text in HTML tags within the `labs()` function. 
+
+2. Tell ggplot to render the HTML by adding `plot.title = element_markdown()`
+inside the `theme()` function. 
+
+Let's see how this can look! I've added the hex colors for the islands to the
+subtitle of my plot:
+
+```{r}
+#| echo: true
+#| label: html-subtitle
+#| eval: false
+install.packages("palmerpenguins")
+library(palmerpenguins)
+
+ggplot(data = penguins, 
+       mapping = aes(x = bill_length_mm, y = species, color = island)
+       ) +
+  geom_boxplot() +
+  scale_color_manual(values = untitled_red) +
+  labs(x = "Bill Length (mm)", 
+       y = "", 
+       title = "Length of Different Penguin Species' Bills", 
+       subtitle = "Separated by <span style = 'color:#c8251d;'>Biscoe</span>, <span style = 'color:#a11b26;'>Dream</span> and <span style = 'color:#ef6552;'>Torgenson</span> Islands") +
+  theme(
+    legend.position = "none", 
+    plot.subtitle = element_markdown()
+    ) +
+  theme_bw()
+```
+
+Notice that the subtitle is still specified as a string. Inside the string there
+are HTML elements (`<span>`) that declare the colors of the text. For example, 
+`<span style = 'color:#c8251d;'>Biscoe</span>` declares that the text "Biscoe"
+should be printed with the color `#c8251d`. The beginning of the span (`<span `)
+and the end of the span (`</span>`) declare when the coloring starts and ends. 
+
+> **For this challenge you are expected to use this information to modify the boxplots you created in Lab 2. First, you are to color the boxplots based on the variable `sex`. Next, you need to move the legend colors for each level of `sex` into 
+the plot title or subtitle. Finally, you are expected to use the `theme()` function to remove the color legend from the plot, since it is no longer needed!**
+
+```{r}
+
+#install.packages("ggtext")
+library(ggtext)
+
+#| label: hot-option-removing-plot-title
+sex_cols <- c("F" = "#E4572E",  
+              "M"   = "#4C78A8") 
+
+ggplot(surveys, aes(x = weight, y = species, fill = sex)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(color = "grey45", alpha = 0.35, width = 0, height = 0.1) +
+  labs(
+    title = "Distribution of Body Weight by Species",
+    subtitle = paste0(
+      "Sex: ",
+      "<span style='color:#4C78A8;'>Male</span> • ",
+      "<span style='color:#E4572E;'>Female</span>"
+    ),
+    x = "Body Weight (grams)",
+    y = "Species"
+  ) +
+  scale_fill_manual(values = sex_cols) +
+  theme_bw() +
+  theme(
+    legend.position = "none",                         
+    plot.subtitle = element_markdown(size = 12),      
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_text(margin = margin(t = 8)),
+    axis.title.y = element_text(margin = margin(r = 8))
+  )
+```
+
+
+# Challenge 2 Submission
+
+For Lab 2 you will submit **only** your HTML file. Your HTML file is required to have the following specifications in the YAML options (at the top of your document):
+
+-   have the plots embedded (`embed-resources: true`)
+-   include your source code (`code-tools: true`)
+-   include all your code and output (`echo: true`)
+
+**If any of the options are not included, your Lab 2 or Challenge 2 assignment will receive an "Incomplete" and you will be required to submit a revision.**
+
+In addition, your document should not have any warnings or messages output in your HTML document. **If your HTML contains warnings or messages, you will receive an "Incomplete" for document formatting and you will be required to submit a revision.**
