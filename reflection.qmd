@@ -1,0 +1,71 @@
+---
+title: "STAT 331 Final Portfolio Reflection"
+author: "Your Name"
+format: html
+execute:
+  eval: false
+---
+
+# Grade Earned
+
+I believe I have earned a grade of **[STATE YOUR GRADE HERE: A, A-, B+, B, etc.]** in STAT 331.
+
+---
+
+# Learning Target Evidence
+
+## Learning Target 1: [Target Name]
+
+**Code Example:**
+```{r}
+# [Assignment Name - e.g., Lab 2 Question 1]
+
+# Paste your code here
+```
+
+**Explanation:** [Explain what this code demonstrates about your learning]
+
+---
+
+## Learning Target 2: [Target Name]
+
+**Code Example:**
+```{r}
+# [Assignment Name]
+
+# Paste your code here
+```
+
+**Explanation:** [Explain what this code demonstrates]
+
+---
+
+[Continue for all learning targets...]
+
+---
+
+# How I Met the Grade Criteria
+
+Based on the course syllabus, the criteria for a [YOUR GRADE] include:
+
+1. **[Criterion 1 from syllabus]:** I met this by... [provide specific evidence and reference artifacts]
+
+2. **[Criterion 2 from syllabus]:** I demonstrated this through... [provide specific evidence]
+
+3. **[Continue for all criteria]**
+
+---
+
+# Additional Considerations
+
+[Optional: Add any other factors that support your grade request]
+
+---
+
+# Supporting Artifacts
+
+The following assignments in my `artifacts` folder support this reflection:
+
+- [artifact1.qmd] - demonstrates [what it shows]
+- [artifact2.qmd] - demonstrates [what it shows]
+- [Continue listing...]
