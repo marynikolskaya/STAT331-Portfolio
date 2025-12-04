@@ -1,139 +1,141 @@
 ---
 title: "The Power of Efficiency"
 format: html
+editor: visual
 ---
 
-## What is Efficiency?
+The Power of Efficiency
 
-In statistical computing and data science, **efficiency** means accomplishing tasks with minimal code repetition, optimal computational resources, and maximum clarity. Efficient code is not just about speed - it's about writing code that is concise, readable, maintainable, and scalable.
+When I first heard the term "efficiency" in the context of statistical computing, I thought it meant making code run faster—optimizing loops, reducing memory usage similar to what it was like in my CS classes. But through the class, I have come to understand that efficiency in data science is more about writing code that is easy to read, easy to modify, and easy to maintain. True efficiency isn't just about speed; rather about reducing the mental load on both the programmer and the reader, reducing opportunities for errors, and creating elegant solutions that can be gracefully scaled.
 
-Efficiency has multiple dimensions:
-- **Computational efficiency**: Using functions and methods that execute quickly
-- **Code efficiency**: Avoiding repetition through functions, loops, and vectorization  
-- **Cognitive efficiency**: Writing clear code that others (and future you) can understand quickly
-- **Workflow efficiency**: Using tools and practices that streamline the entire analysis process
+What is Efficiency in Statistical Computing?
 
-## What Does Efficiency Look Like?
+In statistical computing, efficiency has multiple levels:
 
-Efficient statistical computing involves:
+1. Computational Efficiency: Code that runs quickly and uses memory wisely. Using vectorized operations instead of loops, avoiding unnecessary copying of data similarly to standard programming.
 
-**Using pipelines instead of intermediate objects:**
-```r
-# Inefficient
-data1 <- filter(data, year == 2018)
-data2 <- select(data1, region, cost)
-data3 <- summarize(data2, mean_cost = mean(cost))
+2. Coding Efficiency: Writing less code to accomplish the same task. This reduces the chance of errors and makes the code easier to understand.
 
-# Efficient
-data |>
-  filter(year == 2018) |>
-  select(region, cost) |>
-  summarize(mean_cost = mean(cost))
-```
+3. Cognitive Efficiency: Creating code that's easy to understand and modify aka reproducibility.
 
-**Using built-in functions instead of manual operations:**
-```r
-# Less efficient
-length(unique(teacher_id))
+4. Maintenance Efficiency: Building solutions that are easy to update when requirements change.
 
-# More efficient  
-n_distinct(teacher_id)
-```
+What Does Efficiency Look Like?
 
-**Leveraging vectorization instead of loops:**
-```r
-# Inefficient
-for(i in 1:nrow(data)) {
-  data$new_col[i] <- data$old_col[i] * 2
+Using functions instead of copy-paste:** When I first started coding, if I needed to do something three times, I would literally copy and paste code three times, changing the variable names each time. This is extremely inefficient —it's tedious to write, error-prone, and difficult to maintain.
+
+In Lab 7, I learned to write a rescale_01() function instead. Rather than:
+
+# Rescale length 
+fish$length_scaled <- (fish$length - min(fish$length, na.rm = TRUE)) / 
+                      (max(fish$length, na.rm = TRUE) - min(fish$length, na.rm = TRUE))
+
+# Rescale weight 
+fish$weight_scaled <- (fish$weight - min(fish$weight, na.rm = TRUE)) / 
+                      (max(fish$weight, na.rm = TRUE) - min(fish$weight, na.rm = TRUE))
+
+I could write once and use many times:
+
+# efficient
+rescale_01 <- function(x) {
+  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
 }
 
-# Efficient
-data <- data |> mutate(new_col = old_col * 2)
-```
+fish$length_scaled <- rescale_01(fish$length)
+fish$weight_scaled <- rescale_01(fish$weight)
 
-## What Does Efficiency Allow You To Do?
+Using iteration instead of repetition: Instead of calling a function multiple times an even more efficient solution is using iteration to apply it systematically. In Lab 9, instead of:
 
-Efficiency enables you to:
+# not efficient
+class(surveys$record_id)
+class(surveys$month)  
+class(surveys$day)
+class(surveys$year)
+# ... repeat for 13 variables
 
-1. **Scale your analyses**: Code that works for 100 rows will work for 1 million rows
-2. **Collaborate effectively**: Clear, concise code is easier for teammates to understand and build upon
-3. **Iterate quickly**: When code runs faster and is easier to modify, you can test more ideas
-4. **Avoid errors**: Less code means fewer opportunities for bugs
-5. **Focus on insights**: Spending less time wrestling with code means more time understanding results
+I learned to write:
 
-## Why Is Efficiency Important?
+# efficient
+map_chr(surveys, class)
 
-Efficiency matters because:
+Using across() for multiple columns: In Lab 9 Question 4, I needed to convert all character columns to factors. The inefficient approach would be:
 
-- **Time is valuable**: In professional settings, spending hours on a task that could take minutes is unacceptable
-- **Reproducibility requires clarity**: Efficient code is easier to review, debug, and reproduce
-- **Scalability is essential**: Inefficient code that works on small datasets may fail or take hours on larger datasets
-- **Maintainability matters**: You'll need to update and modify your analyses - efficient code makes this possible
-- **Collaboration depends on readability**: Your teammates need to understand your code
+# not efficient
+evals$course_id <- as.factor(evals$course_id)
+evals$weekday <- as.factor(evals$weekday)
+evals$academic_degree <- as.factor(evals$academic_degree)
+# ... repeat for each character column
 
-As datasets grow larger and analyses become more complex, efficiency becomes not just a nice-to-have but a necessity. A data scientist who can't write efficient code will struggle in any real-world setting.
+Using map_if(), I could write:
 
-## My "A-ha" Moments About Efficiency
+# efficient
+evals_new <- evals |>
+  map_if(is.character, as.factor) |>  
+  bind_cols()
 
-### A-ha Moment #1: Pipelines Transform Workflow (Lab 3)
+What Does Efficiency Allow You to Do?
 
-My first major efficiency revelation came in **Lab 3** when I needed to clean the teacher evaluations dataset. Instead of creating multiple intermediate objects, I used a single pipeline:
-```r
-teacher_evals_clean <- teacher_evals |> 
-  rename(sex = gender) |> 
-  filter(no_participants >= 10) |> 
-  mutate(
-    teacher_id = as.character(teacher_id),
-    academic_degree = as.factor(academic_degree),
-    sex = as.factor(sex)
-  ) |> 
-  select(course_id, teacher_id, question_no, no_participants, 
-         resp_share, SET_score_avg, percent_failed_cur, 
-         academic_degree, seniority, sex)
-```
+Tackle Problems at Scale: In Lab 10, where I ran 10,000 simulations, if I wasn't using efficient code like map_int(), the question would be practically impossible:
 
-**The a-ha**: I realized that pipelines don't just save lines of code - they fundamentally change how I think about data transformation. Instead of thinking "create object A, then object B, then object C," I now think "take this data and put it through these transformations." This mental model is clearer and leads to better code organization.
+results <- map_int(.x = 1:10000, .f = ~ randomBabies(4))
 
-### A-ha Moment #2: Modern Tools Save Time and Effort (Lab 3)
+Similarly, the confidence interval coverage simulation involved running 1,000 iterations of generating data, fitting models, and checking coverage. The efficient approach:
 
-In **Lab 3, Question 8**, I needed to find rows with missing values across any column. Initially, I thought I'd need to check each column individually. Then I discovered `if_any()`:
-```r
-teacher_evals_clean |>
-  filter(if_any(
-    .cols = everything(), 
-    .fns = ~ is.na(.x)
-  ))
-```
+ci_dat <- map(.x = 1:1000, .f = ~mycifun(beta0 = 3, beta1 = 0.5, n = 100))
+ci_results <- bind_rows(ci_dat)
 
-**The a-ha**: I realized that knowing modern tidyverse functions isn't just about being trendy - these functions exist because they solve common problems efficiently. Learning the tidyverse ecosystem meant I could accomplish in one line what might take 10 lines in base R. This was when I truly understood why we spent so much time learning tidyverse tools.
+Experiment and Iterate Quickly: In Lab 8, I wrote a style_plot() wrapper function that could apply different themes and color palettes to any ggplot object:
 
-### A-ha Moment #3: Pivoting Enables Elegant Solutions (Lab 4)
+style_plot <- function(plot, theme_fn = theme_minimal, 
+                       palette = NULL, aesthetic = "color") {
+  # ... 
+}
 
-The most profound efficiency moment came in **Lab 4** when working with childcare costs across years. I needed to compare 2008 and 2018 data side-by-side. My first instinct was to create separate datasets and manually combine them. Then I learned about `pivot_wider()`:
-```r
-ca_median_income <- ca_childcare |> 
-  filter(study_year %in% c(2008, 2018)) |> 
-  group_by(census_region, study_year) |>
-  summarize(median_income = median(mhi_2018)) |>
-  pivot_wider(names_from = study_year, 
-              values_from = median_income) |> 
-  arrange(desc('2018'))
-```
+This efficient code allowed me to quickly try out different visual styles:
 
-**The a-ha**: This was the moment I understood that efficient data science isn't just about writing less code - it's about reshaping data into the structure that makes your analysis natural. The `pivot_*()` functions aren't just conveniences; they're fundamental tools that let you see data from different angles. This realization changed how I approach every data problem: instead of forcing my analysis to fit my data's structure, I now reshape data to fit the analysis I want to do.
+# Try different themes 
+style_plot(my_plot, theme_fn = theme_bw)
+style_plot(my_plot, theme_fn = theme_classic)
+style_plot(my_plot, theme_fn = theme_minimal)
 
-Later in the same lab, when creating visualizations, I used `pivot_longer()` to go the opposite direction:
-```r
-data_plot <- ca_childcare |> 
-  pivot_longer(
-    cols = c(mc_infant, mc_toddler, mc_preschool),
-    names_to = "age_group",
-    values_to = "price"
-  )
-```
+Without this code, I would have to rebuild the plot each time or copy-paste large chunks of code.
 
-This made faceting by age group trivial, whereas with wide data it would have required three separate plots or complex workarounds.
+Build on Previous Work: In Lab 8 Question 1, I created a rescale_column() function that used my earlier rescale_01() function as a helper:
 
----
+rescale_column <- function(data, cols) {
+  data |> 
+    mutate(across(.cols = {{ cols }}, .fns = rescale_01))
+}
 
-These efficiency lessons fundamentally changed my approach to data science. I moved from viewing code as a series of individual commands to seeing it as a thoughtful workflow where each choice impacts readability, maintainability, and scalability. Understanding efficiency isn't just about making code run faster - it's about thinking more clearly about data and developing the judgment to choose the right tool for each task.
+This is efficiency through composition— the idea of building complex things through small or easy building blocks/chunks. Each function does one thing, and when combined they create complex workflows.
+
+Why is Efficiency Important?
+
+1. Reduces Errors: Every line of code is an opportunity for a mistake. For example, in Challenge 7, my initial replace_outliers() function had a bug in one of three repeated sections. If I'd written it efficiently from the start, that bug would have been impossible—there would only be one section to get right.
+
+2. Enables Professional Work: Real data science projects have tight deadlines and changing requirements. In my internship at Zencargo, I worked on workflow automation where requirements changed frequently. Efficient code—using functions, iteration, and abstraction—made it possible to adapt quickly.
+
+3. Allows Focus on the Important Parts: The less time I spend on repetitive mechanics, the more time I can spend on the more interesting, complex parts. In Lab 10's coverage visualization, I could focus on making the statistical concept clear because I wasn't bogged down in repetitive plotting code.
+
+Aha Moments About Efficiency
+
+Aha Moment 1: Lab 7
+
+When I first wrote the rescale_01() function in Lab 7, I thought "this seems like a lot of code for such a simple operation." But then in Lab 7 Question 7, I needed to create side-by-side histograms of original vs. rescaled data. Instead of recalculating the rescaling formula, I just called my function:
+
+fish %>%
+  mutate(length_scaled = rescale_01(length)) %>%
+  ggplot(aes(x = length_scaled)) + 
+  geom_histogram()
+
+The function I'd written earlier saved me from potential errors and made Question 7 easier.
+
+Aha Moment 2: Lab 9
+
+In Lab 9, when I wrote map_chr(surveys, class) to get the data type of every variable, I had a big aha moment. Without map, I would have written 13 lines of code. But if the dataset had 100 variables or 1000 it would have taken me a lot of effort to write the code. This made me realize that efficiency is key to be able to scale code. The efficient solution works just as well for 10 variables as for 10,000, which is why it is important.
+
+The Bigger Picture
+
+The most important thing I've learned about efficiency is that it's not about saving time in the moment rather about creating code that is easy to read, replicate and reuse.
+
+The principles of efficiency I learned in STAT 331—abstraction through functions, iteration instead of repetition, building composable tools—are principles I'll use throughout my career.
