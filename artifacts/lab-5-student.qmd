@@ -1,0 +1,248 @@
+---
+title: "Lab 5: Murder in SQL City"
+subtitle: "`join` + `filter` + `stringr` + `ludridate`"
+author: "Marietta Nikolskaya"
+format: 
+  html:
+    toc: true
+    code-fold: false
+    embed-resources: true
+editor: source
+---
+
+For this lab, you will be joining and filtering related datasets to solve a murder mystery!
+
+## Instructions
+
+Northwestern University's Knight Lab wanted to help sharpen users' database skills, so they created a murder mystery. Can you solve this crime in SQL City??
+
+The relational data you will be working with contains tables with different pieces of information pertinent to the crime - people, social media check-ins, driver's licenses, crime scene reports, police interviews, and more!
+
+![Database schema](https://mystery.knightlab.com/schema.png)
+
+Solve the murder mystery, showing **all of your work in this document**. Your document and code must be well organized, easy to follow, and reproducible.
+
++ Use headers and written descriptions to indicate what you are doing.
++ Use `dplyr` verbs and `join` functions rather than just looking through the tables manually.
++ Use good code formatting practices.
++ Comment your code.
++ Cite any external sources you use to solve the mystery.
+
+### Tips 
+
+You may find the `pull()` function handy for displaying each clue as you go along.
+
+
+## Access the Data
+
+This code chunk will read in all of the tables of data for you. Don't modify or remove this!
+
+```{r}
+#| message: false
+#| warning: false
+#| label: read-in-data
+
+library(tidyverse)
+
+# If purrr is not detected, install the package
+if (!"purrr" %in% installed.packages()) install.packages("purrr")
+
+source("https://raw.githubusercontent.com/atheobold/groupworthy-data-science/main/labs/instructions/lab-5-setup.R")
+```
+
+## Solve the Crime
+
+### Crime Scene Report
+
+Detective Wickham reaches out to you...
+
+> A crime has taken place and I need your help! There was a murder in SQL City sometime on January 15, 2018. Could you retrieve the crime scene report from the police department’s database and follow the clues to find the person responsible for the murder?!
+
+```{r}
+#| label: inspecting-crime-scene-report
+
+```
+
+#### Looking at the crime scene report
+
+```{r}
+# looking at the first few rows
+
+glimpse(crime_scene_report)
+
+
+```
+```{r}
+
+crime_scene_report <- crime_scene_report |>
+  filter(date == 20180115,
+         type == "murder",
+         city == "SQL City")
+glimpse(crime_scene_report)
+```
+#### Pulling the description for the crime scene to try and find some clues for who is the suspect is. 
+```{r}
+crime_scene_report %>%
+  pull(description)
+
+```
+
+#### finding the witnesses reports to find clues of who the suspect is based on their accounts 
+
+```{r}
+
+
+
+witness_1 <- person %>% # finding witness 1 report
+  filter(address_street_name == "Northwestern Dr") %>%  
+  slice_max(address_number)
+
+witness_2 <- person %>% # finding witness 2 report 
+  filter(str_detect(name, "Annabel"),
+         address_street_name == "Franklin Ave")
+
+pull(witness_1)
+pull(witness_2)
+```
+
+#### pulling the witnesses interviews to find clues
+```{r}
+
+
+witness_interviews <- interview %>%
+  filter(person_id %in% c(witness_1, witness_2))
+
+pull(witness_interviews)
+```
+
+#### From the witness interviews I learned: Witness 1 saw a man with a "Get Fit Now Gym" bag, membership number starting with "48Z", gold member status, and a car with plate including "H42W". Witness 2 recognized the killer from the gym on January 9th. 
+
+
+#### Finding Gym Members
+```{r}
+# Find gold members with membership ID starting with "48Z"
+gym_suspect <- get_fit_now_member %>%
+  filter(str_detect(id, "48Z"), 
+         membership_status == "gold")
+```
+
+
+
+#### Checking Gym Attendance on January 9
+```{r}
+# Find who checked into the gym on January 9, 2018
+jan9_suspect <- get_fit_now_check_in %>% 
+  filter(check_in_date == 20180109)
+```
+
+
+### Try to match the suspect from witness 1 and 2
+```{r}
+# Join to find gym suspects who were there on January 9
+gym_jan9_suspect <- gym_suspect %>% 
+  inner_join(jan9_suspect, by = c("id" = "membership_id"))
+ 
+```
+
+#### Finding Car with Matching License Plate
+```{r}
+# Find drivers with "H42W" in their license plate
+car_suspect <- drivers_license %>%
+  filter(str_detect(plate_number, "H42W"))
+
+```
+
+#### Connecting All the Evidence
+```{r}
+
+# Join gym/checkin data with person table, then with driver's license data
+# to find the person who matches all criteria
+
+final_suspect <- gym_jan9_suspect %>%
+  inner_join(person, by = c("person_id" = "id")) %>%
+  inner_join(car_suspect, by = c("license_id" = "id"))
+
+
+# look at the suspects info 
+glimpse(final_suspect)
+                      
+```
+
+#### Checking Suspect's Interview
+```{r}
+# Retrieve person_id: 67318 interview 
+suspect_interview <- interview %>% 
+  filter(person_id == 67318)
+
+# read the interview transcript
+suspect_interview %>% pull(transcript)
+
+```
+
+#### Found out that Jeremy Bowers was just the hitman hired by a woman. 
+#### This is what we know about the woman: She has red hair, is between 5'5" and 5'7" tall, drives a Tesla Model S, and attended the SQL Symphony Concert 3 times in December 2017.
+
+
+## Finding the Mastermind
+
+### Physical Description and Vehicle
+```{r}
+
+# Find women matching the physical description and car
+woman_suspect <- drivers_license %>%
+  filter(gender == "female",
+         height >= 65 & height <= 67,
+         hair_color == "red",
+         car_make == "Tesla",
+         car_model == "Model S")
+
+# Show all potential suspects
+woman_suspect %>% pull(id)
+  
+
+```
+
+#### Connecting to Person Information
+```{r}
+
+# Join with person table to get names and IDs
+woman_names <- woman_suspect %>% 
+  inner_join(person, by = c("id" = "license_id"))
+
+woman_names
+```
+
+#### Concert Attendance
+```{r}
+
+# Find who attended SQL Symphony Concert exactly 3 times in December 2017
+concert <- facebook_event_checkin %>%
+  filter(event_name == "SQL Symphony Concert",
+         date >= 20171201 & date <= 20171231) %>%
+  count(person_id) %>%
+  filter(n == 3)
+
+glimpse(concert)
+
+
+```
+
+### Identifying the Mastermind
+```{r}
+
+# Join women suspects with concert attendees to find the match
+mastermind <- woman_names %>% 
+  inner_join(concert, by = c("id.y" = "person_id")) # Using id.y because that's the person_id after the previous joins
+
+mastermind %>% pull(name)
+
+
+```
+**Follow the evidence to the person responsible for the murder, building a report as you go.**
+Hint: Make sure you check for interviews with any suspects!
+
+## And the final suspect is... Miranda Priestly 
+
+*put the name of the person responsible for the murder here.*
+
+### Miranda Priestly is the mastermind 
