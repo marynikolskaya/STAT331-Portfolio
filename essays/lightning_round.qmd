@@ -1,24 +1,29 @@
 ---
-title: "Lightning Round"
+title: "Lightning Round Essays"
 format: html
+editor: visual
 ---
 
-## Question 1: Outstanding Classmate
+Lightning Round
 
-If **[Student Name]** doesn't earn an A, then nobody should, because they consistently provided thoughtful, detailed peer code reviews that helped me identify not just what was wrong with my code, but why my approach could be improved, demonstrating exceptional collaboration and generosity in helping classmates grow.
+Answer each of the following questions with one sentence including a brief explanation.
 
-## Question 2: Most Difficult Part
+1. Finish the sentence with another student's name: "If [Name of Student] doesn't earn an A, then nobody should, because..."
 
-The most difficult part of the class was **understanding when and how to use different join types** (left, right, inner, full), especially when working with real-world datasets where the relationships between tables weren't immediately obvious and column names didn't always match.
+If Jared Hammett doesn't earn an A, then nobody should, because he consistently provided the most thoughtful peer reviews going beyond pointing out errors to explaining why alternative approaches would be better.  
 
-## Question 3: Easiest Part
+2. What was the most difficult part of the class for you? List a general topic, a specific problem, a kind of work we did, etc. and explain why.
 
-The easiest part of the class was **basic data filtering and selection** using `filter()` and `select()`, because these operations felt intuitive and I could immediately see the results of my code, making it easy to verify I was doing the right thing.
+The most difficult part of the class for me was understanding tidy evaluation and the curly-curly operator ({{ }}) in Lab 8, because it required a different type of thinking that I was not familiar with. The distinction between quoted and unquoted variable names felt completely backwards from everything I'd learned about programming before.
 
-## Question 4: Most Surprising/Interesting
+3. What was the easiest part of the class for you? Explain why.
 
-What surprised me most was **how much visual design choices matter in data communication** - I didn't expect that learning about colors, themes, and legend placement would be as important as learning statistical methods, but I now understand that even perfect analyses fail if visualizations aren't clear and engaging.
+The easiest part of the class for me was creating basic visualizations with ggplot2 in the beginning of the quarter. I had experience making plots and using basic R functions in my previous classes, so I was already familiar with the package and syntax.  
 
-## Question 5: Advice for Future Students
+4. What part of the class surprised or interested you the most? Explain why.
 
-My advice to future STAT 331 students is: **Start assignments early and embrace the revision process** - you'll learn far more from revising your work based on feedback than from getting it perfect the first time, and the early start gives you time to truly understand concepts rather than just rushing to complete tasks.
+I really enjoyed learning about the stylistic capabilities of R. I loved playing around with styling my Quarto docs and being able to create custom plots and tables. I also enjoyed improving my function writing skills; I knew how to write functions in python and java, but it was cool to learn function syntax in R. 
+
+5. Give one piece of advice to a student just beginning a quarter of STAT 331 that will help them be successful in learning.
+
+Start the assignments early and embrace getting stuck, because the most valuable learning happens when you're lost and then all of sudden find the correct code in lecture material or pre-class reading. You'll learn more from figuring out why fct_reorder2() produces a weird legend order than from breezing through ten assignments that work perfectly the first time, and giving yourself time to struggle (and ask for help when truly stuck) is what transforms you from someone who can follow examples to someone who can solve problems.
