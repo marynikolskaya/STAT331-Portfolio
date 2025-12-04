@@ -1,65 +1,114 @@
 ---
 title: "Growth as a Data Scientist"
 format: html
+editor: visual
 ---
 
-Throughout STAT 331, I experienced significant growth in three key areas: data wrangling with joins, creating professional visualizations, and understanding when and how to revise my work based on feedback.
+Growth as a Data Scientist
 
-## Area 1: Mastering Complex Data Joins
+Throughout STAT 331, I have grown a lot as a data scientist, developing from someone who could execute basic R commands into someone who can design sophisticated, reproducible analyses and create custom tools to solve complex problems. I want to focus on three specific areas where I feel I have grown the more: function writing, understanding efficiency, and communication through visualization and documentation.
 
-At the beginning of the quarter, I understood basic data manipulation with `filter()` and `select()`, but joining multiple datasets felt intimidating. By the time I completed **Lab 5 (Murder in SQL City)**, I had developed confidence in using complex joins to solve real-world problems.
+Writing Functions:
 
-The breakthrough moment came when I successfully combined three datasets to identify the murder suspect:
-```r
-final_suspect <- gym_jan9_suspect %>%
-  inner_join(person, by = c("person_id" = "id")) %>%
-  inner_join(car_suspect, by = c("license_id" = "id"))
-```
+At the beginning of the quarter, I had a good understanding of functions in Java and Python, but none in R. I viewed functions in R as tools that other people wrote, which I used in packages like dplyr or ggplot2. Now, I see functions as efficient solutions that are attainable.
 
-This code demonstrates my growth because it required me to:
-- Understand how different tables relate to each other conceptually
-- Choose the appropriate join keys when column names didn't match
-- Chain multiple joins together in a logical sequence
+In Lab 7, I wrote a rescale_01() function that normalized numeric vectors to range from 0 to 1. Initially, my function was simple:
 
-Earlier in the quarter, I would have struggled to visualize how these datasets connected. By Week 5, I could confidently navigate complex relational data structures. This skill has fundamentally changed how I approach data analysis - I now see datasets as interconnected pieces of a puzzle rather than isolated tables.
+rescale_01 <- function(x) {
+  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+}
 
-## Area 2: Creating Publication-Quality Visualizations
+But through the revision process, I learned that good functions don't just compute—they validate inputs. My revised version included comprehensive checks:
 
-My visualizations evolved dramatically from basic plots to professional, publication-ready graphics. **Challenge 2** showcases this growth through my implementation of an embedded legend using the ggtext package.
+rescale_01 <- function(x) {
+  if (!is.numeric(x)) {
+    stop("Input must be numeric")
+  }
+  if (length(x) <= 1) {
+    stop("Input must have more than one element")
+  }
+  # ... computation
+}
 
-Instead of a standard legend separate from the plot, I embedded the color coding directly in the subtitle:
-```r
-labs(
-  subtitle = paste0(
-    "Sex: ",
-    "<span style='color:#4C78A8;'>Male</span> • ",
-    "<span style='color:#E4572E;'>Female</span>"
-  )
+This lesson became even more important in Challenge 7, where I wrote a replace_outliers() function that took multiple inputs. I had to think about how these inputs could interact and what could go wrong:
+
+replace_outliers <- function(measurements, min_value, max_value) {
+  if (!is.numeric(measurements)) {
+    stop("measurements must be numeric")
+  }
+  if (min_value >= max_value) {
+    stop("min_value must be less than max_value")
+  }
+  # ... more checks 
+}
+
+By Lab 8, I had started writing functions that operated on entire data frames using tidy evaluation ({{ }}). My rescale_column() and plot_boxplot() functions demonstrate that I can create tools that feel like true tidyverse functions—accepting unquoted variable names and working seamlessly in pipelines. This represents my fundamental shift as a programmer from using R to understanding R.
+
+Understanding Efficiency:
+
+I had a very different concept of efficiency at the beginning of the quarter. In my previous classes, I was taught that efficiency was about minimizing memory used and increasing speed of operation. My perspective on efficiency completely shifted during Lab 9, where I used the map() family of functions to iterate over operations rather than copying and pasting code.
+
+My first instinct would have been:
+
+class(surveys$record_id)
+class(surveys$month)
+class(surveys$day)
+# ... repeat for every variable
+
+But using map_chr(), I could accomplish this in one elegant line:
+
+map_chr(surveys, class) |>
+  enframe(name = "Variable", value = "Data Type")
+
+The power of efficiency became even clearer in Lab 10, where I ran 10,000 simulations to explore the random babies problem. Using map_int():
+
+results <- map_int(.x = 1:10000, .f = ~ randomBabies(4))
+
+This single line replaced what would have been either a slow for-loop or 10,000 lines of repeated code. More importantly, it separated what I was doing from how many times (10,000), making the code more readable and flexible.
+
+Professionalism:
+
+Personally I feel like my most valuable growth has been in creating visualizations and tables that don't just display data but actively communicate insights. At the start of the quarter, my plots were basic; using boring colors, plain titles and unclear displays. By the end, I was making thoughtful designing all my plots, prioritized the reader's understanding of my analysis and data.
+
+This growth is evident in Challenge 3 (revised), where I created a stacked bar chart comparing teacher evaluation levels across seniority groups. The original version showed the proportions but required mental math to understand the counts. After revision, I added labels directly on the bars:
+
+geom_text(
+  aes(label = after_stat(count)),
+  stat = "count",
+  position = position_fill(vjust = 0.5),
+  color = "white",
+  size = 3.5
 )
-```
 
-This demonstrates growth in:
-- **Technical skills**: Learning to use HTML styling within R and discovering new packages
-- **Design thinking**: Understanding that eliminating legends reduces cognitive load for readers
-- **Creativity**: Moving beyond default ggplot options to create more elegant solutions
+This small addition transformed the visualization from something you had to decode to something a reader could immediately understand. I learned that good visualizations take the mental work out of understanding plots.
 
-Early in the quarter, I focused on making plots that "worked." By the end, I was thinking critically about visual design principles and reader experience. I learned that small details - like removing unnecessary legends, choosing accessible colors, and adding informative labels - make the difference between adequate and excellent visualizations.
+My growth in table creation is demonstrated in Lab 9, where I created a demographics table using the gt package. Instead of a basic frequency table, I created something more professional:
 
-## Area 3: Developing a Growth Mindset Through Revision
+demographics_table |>
+  gt(groupname_col = "Demographic") |>
+  tab_header(title = "Instructor Demographics") |>
+  tab_spanner(label = "Summary Statistics", columns = c(Count, Percent))
 
-Perhaps my most significant growth wasn't in any specific coding skill, but in how I approached learning itself. My revisions for **Lab 3** and **Challenge 3** illustrate this transformation.
+The grouped structure, spanning headers, and formatted percentages made the table immediately easier to read.
 
-In my Lab 3 revision, I didn't just fix the code - I reflected deeply on *why* my original approach was problematic:
+In Lab 10's coverage plot, I visualized the statistical concept of confidence interval coverage:
 
-> "What I did wrong: My description only mentioned the structure (rows, columns, data types) without providing important context about where, when, how, and why the data were collected. What I learned: A data description should provide context about the who, what, when, where, why, and how of data collection, not just the technical structure."
+ggplot(ci_results_plot, aes(y = sim)) +
+  geom_segment(aes(x = ci_low, xend = ci_high, yend = sim, color = factor(cover))) +
+  geom_vline(xintercept = 0.5, linetype = "dashed") +
+  scale_color_manual(
+    values = c("0" = "hotpink2", "1" = "olivedrab"),
+    labels = c("No", "Yes")
+  )
 
-This type of reflection shows that I moved from seeing revisions as "fixing mistakes" to viewing them as opportunities for deeper understanding. I began to:
-- Anticipate common errors before making them
-- Understand the *reasoning* behind coding best practices
-- Apply lessons from one assignment to future work
+This visualization made an abstract statistical concept—that 95% of confidence intervals should contain the true parameter—visually and immediately obvious. The green lines that crossed the dashed line (true value) versus the pink lines that didn't told the story without requiring any statistical background to understand.
 
-By the end of the quarter, I was catching potential issues before submitting assignments because I had internalized the feedback from earlier revisions. This growth mindset will serve me far beyond STAT 331.
+Connecting the Growth Areas
 
----
+Writing good functions requires thinking about efficiency, creating efficient code often involves writing functions, and communicating professionally requires both functions (for reproducible analysis) and efficiency (readers can understand quickly).
 
-These three areas of growth - technical proficiency with joins, attention to visualization quality, and reflective learning - represent my transformation from someone who could write functional code to someone who writes excellent, thoughtful, professional data science work.
+Moreover, all three areas represent a shift in my thinking from operational thinking (how do I make R do this specific thing?) to strategic thinking (what's the best way to structure this problem? how can I make my solution reusable? how can I communicate this insight?).
+
+Looking Forward
+
+The growth I’ve experienced in STAT 331 has given me confidence as a data scientist, and I’m truly grateful for that. As I transition into my career, it gives me peace of mind knowing I can solve complex problems in R and clearly communicate my findings and solutions to my future team.
