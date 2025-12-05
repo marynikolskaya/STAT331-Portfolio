@@ -1,0 +1,169 @@
+---
+title: "Lab 4 Challenge"
+author: "Marietta Nikolskaya"
+date: "10 October, 2025"
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    warning: false
+    embed-resources: true
+    toc: true
+    toc-depth: 2
+editor: source
+---
+
+# Research Question: 
+
+#### Which California regions show the largest cost differences between center-based and family-based childcare for infants in 2018? 
+
+```{r}
+#| label: packages
+library(readxl)
+library(tidyverse) 
+library(forcats)
+```
+
+```{r}
+#| label: load-data
+
+childcare_costs <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-05-09/childcare_costs.csv')
+
+
+counties <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-05-09/counties.csv')
+
+
+tax_rev <- read_csv('https://atheobold.github.io/groupworthy-data-science/labs/instructions/data/ca_tax_revenue.csv')
+```
+
+
+```{r}
+#| label: ca-childcare-costs
+ca_childcare <- childcare_costs |>
+  left_join(counties, by = "county_fips_code") |>
+  filter(state_abbreviation == "CA")
+ca_childcare
+
+```
+
+```{r}
+#| label: add-tax-information
+ca_childcare <- ca_childcare |> 
+  left_join(tax_rev, by = c(
+    "county_name" = "entity_name", 
+    "study_year" = "year"
+  )) 
+ca_childcare
+
+
+```
+
+```{r}
+#| label: defining-census-regions
+
+superior_counties <- c("Butte","Colusa","El Dorado",
+                       "Glenn","Lassen","Modoc",
+                       "Nevada","Placer","Plumas",
+                       "Sacramento","Shasta","Sierra","Siskiyou",
+                       "Sutter","Tehama","Yolo","Yuba")
+
+north_coast_counties <- c("Del Norte","Humboldt","Lake",
+                          "Mendocino","Napa","Sonoma","Trinity")
+
+san_fran_counties <- c("Alameda","Contra Costa","Marin",
+                       "San Francisco","San Mateo","Santa Clara",
+                       "Solano")
+
+n_san_joaquin_counties <- c("Alpine","Amador","Calaveras","Madera",
+                            "Mariposa","Merced","Mono","San Joaquin",
+                            "Stanislaus","Tuolumne")
+
+central_coast_counties <- c("Monterey","San Benito","San Luis Obispo",
+                            "Santa Barbara","Santa Cruz","Ventura")
+
+s_san_joaquin_counties <- c("Fresno","Inyo","Kern","Kings","Tulare")
+
+inland_counties <- c("Riverside","San Bernardino")
+
+la_county <- "Los Angeles"
+
+orange_county  <- "Orange"
+
+san_diego_imperial_counties <- c("Imperial","San Diego")
+
+ca_childcare <- ca_childcare |>
+  mutate(
+    county_name_clean = str_remove(county_name, " County"),
+    county_name_clean = as.factor(county_name_clean),
+    census_region = fct_collapse(county_name_clean,
+      "Superior" = superior_counties,
+      "North Coast" = north_coast_counties,
+      "San Fran" = san_fran_counties,
+      "N San Joaquin" = n_san_joaquin_counties,
+      "Central Coast" = central_coast_counties,
+      "S San Joaquin" = s_san_joaquin_counties,
+      "Inland" = inland_counties,
+      "LA" = la_county,
+      "Orange" = orange_county,
+      "San Diego" = san_diego_imperial_counties
+    )
+  )
+ca_childcare
+
+```
+
+# Table 
+```{r}
+ca_childcare_new <- ca_childcare |> 
+  filter(study_year == 2018) |>
+  select(census_region, mc_infant, mfcc_infant) |> 
+  mutate(cost_difference = mc_infant - mfcc_infant) |>
+  group_by(census_region) |>
+  summarize(
+    median_center = median(mc_infant),
+    median_family = median(mfcc_infant),
+    median_difference = median(cost_difference)) |>
+  arrange(desc(median_difference))
+ca_childcare_new
+```
+
+# Scatterplot 
+
+```{r}
+
+scatterplot <- ca_childcare_new |>
+  ggplot(aes(x = median_family, y = median_center)) + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") + 
+  geom_point(color = "blue", size = 4, alpha = 0.7) +
+  geom_text(aes(label = census_region), nudge_y = 10, hjust = 0) +
+  labs(
+    x = "Median Family Care Cost ($)", 
+    y = "Median Center Care Cost ($)", 
+    title = "Center vs. Family Childcare Costs for Infants by Region (2018)"
+  ) + 
+  theme_minimal()
+scatterplot
+```
+
+# Lollipop plot 
+
+```{r}
+lollipop <- ca_childcare_new |>
+  ggplot(aes(x = fct_reorder(census_region, median_difference), 
+             y = median_difference)) +
+  geom_segment(aes(xend = census_region, y = 0, yend = median_difference), 
+               color = "gray50") +
+  geom_point(size = 4, color = "steelblue") +
+  coord_flip() +
+  labs(
+    x = "California Region",
+    y = "Cost Difference: Center - Family ($)",
+    title = "Cost Difference Between Center and Family Childcare for Infants (2018)"
+  ) +
+  theme_minimal()
+lollipop
+```
+
+# Report: 
+
+#### This analysis uses childcare cost data from California counties in 2018, examining median weekly costs for center-based versus family-based infant care across ten census regions. The research question is: Which California regions show the largest cost differences between center-based and family-based childcare for infants in 2018? Table 1 presents the median costs for both care types and their differences across all ten regions, ordered from largest to smallest difference. LA shows the largest gap at $117.94 per week, followed closely by Central Coast ($115.04) and San Francisco ($110.73). In contrast, North Coast has the smallest difference at only $47.09, roughly 2.5 times smaller than LA's gap. The scatterplot visually displays the relationship between family care costs (x-axis) and center care costs (y-axis) for each region. The dashed diagonal line represents where costs would be equal; regions positioned farther above this line have larger cost differences.This pattern suggests that higher-cost urban and coastal regions tend to have larger disparities between center-based and family-based care, potentially reflecting different market dynamics or regulatory environments in these areas. Families in regions with larger cost gaps may face more significant trade-offs when choosing between care settings.
