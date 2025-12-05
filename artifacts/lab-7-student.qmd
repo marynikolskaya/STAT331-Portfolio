@@ -1,0 +1,256 @@
+---
+title: "Lab 7: Functions + Fish"
+author: "Marietta Nikolskaya"
+format: 
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    code-tools: true
+editor: source
+execute: 
+  warning: false
+  
+---
+
+The goal of this lab is learn more about exploring missing data and writing
+modular code.
+
+```{r}
+#| label: setup
+library(dplyr)
+library(tidyverse)
+fish <- read.csv("BlackfootFish.csv")
+glimpse(fish)
+
+
+```
+
+## The Data
+
+This lab's data concerns mark-recapture data on four species of trout from the
+Blackfoot River outside of Helena, Montana. These four species are
+**rainbow trout (RBT)**, **westslope cutthroat trout (WCT)**, **bull trout**,
+and **brown trout**.
+
+Mark-recapture is a common method used by ecologists to estimate a population's
+size when it is impossible to conduct a census (count every animal). This method
+works by *tagging* animals with a tracking device so that scientists can track
+their movement and presence.
+
+## Data Exploration
+
+The measurements of each captured fish were taken by a biologist on a raft in
+the river. The lack of a laboratory setting opens the door to the possibility of
+measurement errors.
+
+**1. Let's look for missing values in the dataset. Output ONE table that answers BOTH of the following questions:**
+
++ **How many observations have missing values?**
++ **What variable(s) have missing values present?**
+
+::: callout-tip
+# You should use `across()`!
+:::
+
+```{r}
+#| label: find-missing-values
+
+missing_summary <- fish %>%
+  summarise(across(everything(), ~sum(is.na(.)))) %>%
+  pivot_longer(everything(), 
+               names_to = "Variable", 
+               values_to = "Missing_Count")
+
+missing_summary
+```
+
+**2. Use a pivot to transform your summary table from Question 1 into a table that is easier to read.** 
+
+```{r}
+#| label: pivot-summary-table
+
+missing_summary %>%
+  pivot_wider(names_from = Variable, 
+              values_from = Missing_Count)
+missing_summary
+
+```
+## Revision: 
+
+**What I did wrong:** 
+I filtered to only missing values and then selected only one column, hiding the full pivoted structure. 
+
+**What I learned: **
+When asked to create a pivot table, I should display the entire transformed structure, not just extract a single summary value. The pivot_wider transformation itself makes the data easier to read by putting variables as columns. 
+
+**3. Create ONE thoughtful visualization that explores the frequency of missing values across the different years, sections, and trips.**
+
+
+```{r}
+#| label: visualize-missing-patterns
+
+fish_missing_viz <- fish %>%
+  mutate(
+    has_missing = is.na(weight),
+    trip_label = paste("Trip", trip)  
+  ) %>%
+  group_by(year, section, trip_label, has_missing) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  filter(has_missing == TRUE)  
+
+ggplot(fish_missing_viz, 
+       aes(x = as.factor(year), y = count, fill = section)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~trip_label) +
+  labs(
+    title = "Missing Weight Measurements Across Mark-Recapture Surveys of Blackfoot River Trout",
+    subtitle = "All missing values occur in marked (recaptured) fish across years and river sections",
+    x = "Year",
+    y = "Number of Missing Weight Values",
+    fill = "River Section"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+
+```
+
+## Revisions: 
+
+**What I did wrong: **
+Used mark_status label which has biological meaning separate from missingness
+Didn't include trip as requested
+Title could provide more context
+
+**What I learned: **
+I should include ALL requested variables (year, section, AND trip)
+Use fct_recode() or paste() to create informative facet labels like "Trip 1" instead of just "1"
+Labels should accurately reflect what's being shown (missingness, not biological status)
+Titles and subtitles can provide important biological context about the data collection process
+
+## Rescaling the Data
+
+If I wanted to rescale every quantitative variable in my dataset so that they
+only have values between 0 and 1, I could use this code:
+
+```{r}
+#| echo: true
+#| eval: false
+
+fish <- fish |> 
+  mutate(length = (length - min(length, na.rm = TRUE)) / 
+           (max(length, na.rm = TRUE) - min(length, na.rm = TRUE)), 
+         weight = (weight - min(weight, na.rm = TRUE)) / 
+           (max(weight, na.rm = TRUE) - min(length, na.rm = TRUE)))
+```
+
+
+**4. Transform the repeated process above into a `rescale_01()` function. Your function should...**
+
++ **... take a single vector as input.**
++ **... return the rescaled vector.**
+
+```{r}
+#| label: write-rescale-function
+
+
+rescale_01 <- function(x) {
+  if (!is.numeric(x)) {
+    stop()
+  }
+  
+  if (length(x) <= 1) {
+    stop()
+  }
+  
+  min_x <- min(x, na.rm = TRUE)
+  max_x <- max(x, na.rm = TRUE)
+  
+
+  (x - min_x) / (max_x - min_x)
+}
+
+```
+
+::: callout-tip
+# Efficiency 
+
+Think about the efficiency of the function you wrote. Are you calling the
+**same** function multiple times? You might want to look into the `range()` 
+function. 
+:::
+
+**5. Let's incorporate some input validation into your function. Modify your previous code so that the function stops if ...**
+
++ **... the input vector is not numeric.**
++ **... the length of the input vector is not greater than 1.**
+
+::: callout-tip
+# Modify Previous Code
+
+Do not create a new code chunk here -- simply add these stops to your function
+above!
+:::
+
+## Test Your Function
+
+**6. Run the code below to test your function. Verify that the maximum of your rescaled vector is 1 and the minimum is 0!**
+
+```{r}
+#| label: verify-rescale-function
+
+x <- c(1:25, NA)
+
+rescaled <- rescale_01(x)
+min(rescaled, na.rm = TRUE)
+max(rescaled, na.rm = TRUE)
+```
+
+Next, let's test the function on the `length` column of the `BlackfootFish` data.
+
+**7. The code below makes a histogram of the original values of `length`. Add a plot of the rescaled values of `length`. Output your plots side-by-side, so the reader can confirm the only aspect that has changed is the scale.**
+
+::: callout-warning
+This will require you to call your `rescale_01()` function within a `mutate()`
+statement in order to create a `length_scaled` variable.
+:::
+
+```{r}
+#| label: compare-original-with-rescaled-lengths
+
+fish |>  
+  ggplot(aes(x = length)) + 
+  geom_histogram(binwidth = 45) +
+  labs(x = "Original Values of Fish Length (mm)",
+       y = "Count") +
+  scale_y_continuous(limits = c(0, 4000)) +
+  theme_minimal()
+
+# Rescaled length plot
+fish %>%
+  mutate(length_scaled = rescale_01(length)) %>%
+  ggplot(aes(x = length_scaled)) + 
+  geom_histogram(binwidth = 0.1) +
+  labs(x = "Rescaled Values of Fish Length (0-1)",
+       y = "Count") +
+  scale_y_continuous(limits = c(0, 4000)) +
+  theme_minimal()
+
+```
+
+## Revisions: 
+
+**What I did wrong: **
+Created two separate code chunks that output plots sequentially rather than side-by-side.
+
+**What I learned: **
+Quarto has special chunk options like layout-ncol: 2 that control how figures are displayed. Using this option allows direct visual comparison between the original and transformed data by placing them side-by-side instead of stacked vertically.
+
+::: callout-tip
+1. Set the y-axis limits for both plots to go from 0 to 4000 to allow for direct comparison across plots.
+
+2. Pay attention to `binwidth`!
+
+3. Use a Quarto code chunk option to put the plots side-by-side.
+:::
