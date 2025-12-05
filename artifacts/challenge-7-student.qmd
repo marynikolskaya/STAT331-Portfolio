@@ -1,0 +1,193 @@
+---
+title: "Challenge 7: Incorporating Multiple Inputs"
+subtitle: "Functions + Fish"
+author: "Marietta Nikolskaya"
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    warning: false
+    embed-resources: true
+editor: source
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+fish <- read_csv("BlackfootFish.csv")
+
+```
+
+## Condition Index
+
+A frequently used measurement for fish health is a condition index [(Wikipedia article)](https://en.wikipedia.org/wiki/Condition_index_in_fish). The following
+simple equation can be used to calculate the approximate condition index of a
+fish:
+
+$$\text{condition index} = \frac{weight}{length^3} \times 100$$
+
+**1. There are specific units required for the calculation of a condition index -- length must be in centimeters and weight must be in grams. The weight data for the Blackfoot River fish were collected in grams; the length data were collected in millimeters. Transform the length data to the correct units.**
+
+```{r}
+#| label: transform-data-to-have-correct-units
+fish <- fish |>
+  mutate(length = length / 10)
+head(fish)
+
+```
+
+**2. Collecting data of this sort can be very messy! Write a function that will replace unlikely `length` and `weight` measurements with `NA`. Your function should accept at least three inputs:**
+
++ **a vector of measurements,**
++ **the minimum reasonable value,**
++ **the maximum reasonable value.**
+
+**If a value falls outside these bounds, you should replace it with an `NA`.**
+
+**Hint:** If you are struggling with the structure of your function, I would suggest reading the [Mutating Function](https://r4ds.hadley.nz/functions.html#mutate-functions) from R4DS.
+
+```{r}
+#| label: function-to-change-impossible-measurements-to-NA
+
+replace_outliers <- function(measurements, min_value, max_value) {
+
+  if (!is.numeric(measurements)) {
+    stop("measurements must be numeric")
+  }
+  
+  if (!is.numeric(min_value) | !is.numeric(max_value)) {
+    stop("min_value and max_value must be numeric")
+  }
+  
+  if (length(min_value) != 1 | length(max_value) != 1) {
+    stop("min_value and max_value must be single values")
+  }
+  
+  if (min_value >= max_value) {
+    stop("min_value must be less than max_value")
+  }
+  
+  case_when(
+    measurements < min_value ~ NA_real_,
+    measurements > max_value ~ NA_real_,
+    TRUE ~ measurements
+  )
+}
+
+```
+
+## Revision: 
+
+**What I did wrong: **
+No input validation to check if inputs are the correct type.
+Used if_else() with multiple conditions (though this actually works fine here).
+Used return() when R automatically returns the last expression.
+
+**What I learned: **
+Functions should validate inputs to ensure they're the correct type and make sense.
+case_when() is built for multiple conditions and is more readable than complex if_else().
+R automatically returns the last expression in a function - no need for return() unless returning early.
+Good function checks improve code reliability and provide helpful error messages.
+
+**3. After consulting the [Montana Record Table](https://fwp.mt.gov/fish/anglingData/records) for the four species of trout included in these data, I have conjectured that it is unlikely to have measurements for fish below 5 cm and above 80 cm in length or below 10 g and above 4,000 g in weight. Use your function to modify the `length` and `weight` columns of the `fish` dataset based on my cutoffs.**
+
+```{r}
+#| label: modify-impossible-values-of-length-weight
+fish <- fish |>
+  mutate(
+    length = replace_outliers(length, min_value = 5, max_value = 80),
+    weight = replace_outliers(weight, min_value = 10, max_value = 4000)
+  )
+summary(fish$length)
+summary(fish$weight)
+head(fish)
+```
+
+**4. Write a function to calculate the condition index of a fish, given inputs of weight and length.**
+
+```{r}
+#| label: condition-function
+calculate_condition_index <- function(weight, length) {
+  if (!is.numeric(weight)) {
+    stop("weight must be numeric")
+  }
+  
+  if (!is.numeric(length)) {
+    stop("length must be numeric")
+  }
+  
+  if (length(weight) != length(length)) {
+    stop("weight and length must have the same length")
+  }
+  
+  (weight / length ^ 3) * 100
+}
+
+
+fish <- fish |>
+  mutate(condition_index = calculate_condition_index(weight, length))
+summary(fish$condition_index)
+
+```
+
+## Revision: 
+
+**What I did wrong: **
+No input validation.
+Unnecessary return() statement.
+
+**What I learned: **
+Even mathematical functions need input validation to ensure correct types.
+When functions take multiple vectors, check they're compatible lengths.
+Removing unnecessary return() makes code cleaner and more R-idiomatic.
+The last expression is automatically returned, making the function more concise.
+
+
+**5. Make a thoughtful visualization of how fish conditions have varied over the duration of this study.** To be thoughtful...you need to use at least a third variable!
+
+
+```{r}
+#| label: condition-indices-over-time
+
+# Create summary data with better ordering
+fish_summary <- fish |>
+  drop_na(condition_index) |>
+  group_by(year, species) |>
+  summarise(
+    mean_condition = mean(condition_index, na.rm = TRUE),
+    n = n(),
+    .groups = "drop"
+  ) |>
+  filter(n >= 5) |>
+  mutate(species = fct_reorder2(species, year, mean_condition))
+
+ggplot(fish_summary, aes(x = year, y = mean_condition, color = species)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Mean Fish Condition Index Over Time by Species",
+    subtitle = "Yearly averages for groups with n ≥ 5 observations",
+    x = "Year",
+    y = "Mean Condition Index",
+    color = "Species",
+    caption = "Point size represents sample size ranging from 5 to several hundred fish per year"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  scale_color_brewer(palette = "Set2")
+
+```
+
+## Revision: 
+
+**What I did wrong: **
+Legend at bottom makes it harder to match lines to species.
+Legend order doesn't match line order on plot.
+Sample size as point size is cluttered and hard to read.
+
+**What I learned: ** 
+Legend on the right is easier to match with line positions than bottom.
+fct_reorder2() can reorder legend items to match the visual order of lines.
+Multiple visual encodings (color + size) can create clutter.
+
+
