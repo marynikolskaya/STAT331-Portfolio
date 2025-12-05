@@ -1,0 +1,305 @@
+---
+title: "Lab 9 & Challenge 9: Searching for Efficiency & Making Great Tables"
+author: "Marietta Nikolskaya"
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    theme: lux
+    warning: false
+    embed-resources: true
+editor: source
+html-table-processing: none
+---
+
+```{r}
+#| label: packages
+library(tidyverse)
+library(kableExtra)
+library(gt)
+```
+
+## Formatting Tables
+
+In this lab, we will also practice making nice, report worthy, tables!
+
+I would recommend you think of tables no different from the visualizations
+you've been making. We want **all** aspects of our tables to be clear to the
+reader, so the comparisons we want them to make are straightforward. You should
+be thinking about:
+
+- Column headers
+- Grouping headers
+- Order of columns
+- Order of rows
+- Number of decimals included for numeric entries
+- etc.
+
+There are many packages for generating tables but I recommend either `kable()`
+function from the **knitr** package or `gt()` function from the **gt** package
+and their add-ons.
+
+**For simple tables**
+
+-   the `kable()` function from the **knitr** package for *simple* tables
+-   the `gt()` function from the **gt** package
+
+**For more sophisticated tables**
+
+-   styling functions from the **kableExtra** package (e.g., `kable_styling()`,
+`kable_classic()`)
+-   add-on functions from the **gt** package (e.g., `cols_label()`, 
+`tab_header()`, `fmt_percent()`)
+
+## The Data
+
+For this week's lab, we will be **revisiting questions from previous lab assignments**, 
+with the purpose of using functions from the `map()` family to  iterate over certain tasks. To do this, we will need to load in the data from Lab 2, Lab 3, and Lab 7.
+
+**Question 1: Edit the code below to read in the appropriate datasets that you should have saved from the previous labs!**
+
+
+```{r}
+#| label: read-in-old-data
+
+# Data from Lab 2
+surveys <- read_csv(here::here("..", "Week2", "surveys.csv"))
+
+# Data from Lab 3
+evals <- read_csv(here::here("..", "week 3", "teacher_evals.csv")) |> 
+  rename(sex = gender)
+
+# Data from Lab 7
+fish <- read_csv(here::here("..", "week 7", "BlackfootFish.csv"))
+
+```
+## Revision: 
+
+**Issue: Misunderstanding of how here() works with ".." and file organization. **
+
+**Learned: The here() function automatically starts at the root of your project folder (where the .Rproj file is located). Using ".." moves up from the root, which goes outside the project. I should construct paths from the project root without "..". **
+
+
+
+
+## Lab 2
+
+First up, we're going to revisit Question 2 from Lab 2. This question asked:
+
+> What are the data types of the variables in this dataset?
+
+**Question 2: Using `map_chr()`, produce a table of the data type of each variable in the `surveys` dataset. Specifically, the table should have two columns `Variable` and `Data Type` with a row for each variable and be displayed using `kable()`.**
+
+*Hint: You will want to check out the `enframe()` function to help with this task.*
+
+```{r}
+#| label: map-data-types-of-surveys
+map_chr(.x = surveys, .f = class) |>
+  enframe(name = "Variable", value = "Data Type") |>
+  knitr::kable()
+
+```
+## Revision: 
+
+**Issue: Not using named arguments for better code readability.**
+
+**Learned: Named arguments (.x = and .f =) make code more readable and self-documenting. This is especially helpful when someone else reads the code or when I revisit it later. It's clear what each argument represents.**
+
+**Question 3: Format the table nicely! Your table must use either `kable()` and functions in the kableExtra package or `gt()` and functions from the gt package to produce 
+a table with the following qualities:**
+
+- rows are ordered to make the information easy to understand
+- include a caption or header
+- use bolded column names
+
+*Note that you should assign the column names when creating the table, not by renaming columns in the dataset itself because we hate variable names with spaces in them!*
+
+```{r}
+#| label: formatted-var-tab
+surveys |> 
+  map_chr(class) |>
+  enframe(name = "Variable", value = "Data Type") |>
+  mutate(`Data Type` = str_to_title(`Data Type`)) |>  # Fix capitalization
+  arrange(`Data Type`) |>  # Arrange by the focus variable
+  kable(col.names = c("Variable Name", "Data Type"),
+        caption = "Data Types of Variables in Surveys Dataset") |>  
+  kable_classic()
+```
+## Revision: 
+
+**Issue: Table should be arranged by data type (the focus variable), and data types should have consistent capitalization. **
+
+**Learned: When a table focuses on a specific variable (data types), arrange by that variable to group similar items together. Use str_to_title() from the stringr package to standardize capitalization. This makes patterns easier to spot (all Character variables together, all Numeric together, etc.) **
+
+
+## Lab 3
+
+Now, were on to Lab 3 where we will revisit two questions. 
+
+In the original version of Lab 3, Question 4 asked you to:
+
+> Change data types in whichever way you see fit (e.g., is the instructor ID
+> really a numeric data type?)
+
+**Question 4: Using `map_at()` or `map_if()`, convert the `course_id`, `weekday`, `academic_degree`, `time_of_day`, and `sex` columns to factors. In other words, convert all character variables into factors. DO NOT PRINT OUT YOUR NEW DATA FRAME, just show the code.**
+
+*Hint: You will need to use `bind_cols()` to transform the list output back into a data frame.* 
+
+```{r}
+#| label: map-to-mutate-columns
+evals_new <- evals |>
+  map_if(.p = is.character, .f = as.factor) |>  
+  bind_cols()
+
+```
+
+## Revision: 
+
+**Issue: Not using named arguments.**
+
+**Learned: Using named arguments (.x, .p, .f) in map_if() makes it clear which argument is the data, which is the predicate function (test), and which is the function to apply. This improves code clarity and maintainability. **
+
+Next up, we're going revisit Question 7 which asked:
+
+> What are the demographics of the instructors in this study? Investigate the
+> variables `academic_degree`, `seniority`, and `sex` and summarize your
+> findings in ~3 complete sentences.
+
+Many people created **multiple** tables of counts for each of these
+demographics, but in this exercise we are going to create **one** table with 
+every demographic.
+
+**Question 5: Recreate the (mainly unformatted) table shown in the instructions using [one]{.underline} pipeline. It is okay if the rows are not in the same order in your table,  but the rest of the table should match mine. Meaning, you will need to do some renaming of the names of the variables and their levels.**
+
+```{r}
+#| label: unformatted-summary-table
+
+demographics_table <- evals_new |>
+  select(academic_degree, seniority, sex) |>
+  mutate(
+    # Group seniority into categories first
+    seniority = case_when(
+      seniority %in% c(1, 2, 3) ~ "Junior",
+      seniority %in% c(4, 5, 6) ~ "Senior", 
+      seniority %in% c(7, 8, 9, 10, 11) ~ "Very Senior"
+    )
+  ) |>
+  mutate(across(everything(), as.character)) |>
+  pivot_longer(cols = everything(),
+               names_to = "Demographic",
+               values_to = "Level") |>
+  count(Demographic, Level) |>
+  mutate(Demographic = case_when(
+    Demographic == "academic_degree" ~ "Academic Degree",
+    Demographic == "seniority" ~ "Seniority",
+    Demographic == "sex" ~ "Sex"
+  )) |>
+  group_by(Demographic) |>
+  mutate(Percent = n / sum(n) * 100) |>
+  ungroup() |>
+  rename(Count = n)
+
+# Display the table
+demographics_table
+
+```
+## Revision: 
+
+**Issue: Table output not shown, and seniority should be grouped into three categories (junior, senior, very senior) as done in Challenge 3.**
+
+**Learned: Always display intermediate tables when asked to "recreate" something so the instructor can verify. Need to apply the same transformations/groupings used in previous assignments for consistency. Grouping seniority makes the table more readable and meaningful**
+
+
+**Question 6: Now turn your output into a very nice table, like one of the examples shown in the instructions. You can style your table using either functions from the kableExtra package or from the gt package.** 
+
+**Your table does not need to be an exact copy of the example but it should include
+[all]{.underline} of the following:**
+ 
+- Some way of clearly indicating the three variable types as row groups
+- Giving nice column names
+- Using a column header that spans the `Count` and `%` columns 
+- Nicely formatting the % column to include % signs and only 1-2 digits
+- Giving the table a title or a caption
+
+```{r}
+#| label: fancy-table
+demographics_table |>
+  mutate(Percent = paste0(round(Percent, 1), "%")) |>
+  gt(groupname_col = "Demographic") |>
+  tab_header(title = "Instructor Demographics") |>
+  cols_label(
+    Level = "Category",
+    Count = "Count",
+    Percent = "Percent"
+  ) |>
+  tab_spanner(
+    label = "Summary Statistics",
+    columns = c(Count, Percent)
+  )
+```
+## Revision: 
+
+**Issue: Same seniority grouping issue as Question 5.**
+
+**Learned: Formatting issues cascade - if the underlying data isn't transformed correctly in earlier steps, the final formatted table will also be incorrect.**
+
+## Lab 7
+
+For our last problem, we will revisit a question from the most recent lab. 
+Question 1 asked you to use `across()` to make a table which summarized: 
+
+> What variable(s) have missing values present?  
+> How many observations have missing values?
+
+**Question 7: Using `map_int()`, produce a nicely formatted table of the number of missing values for each variable in the `fish` data.** 
+
+*Hint: You will want to check out the `enframe()` function to help with this task.*
+
+```{r}
+#| label: map-missing-values-of-fish
+fish |>
+  map_int(.f = ~sum(is.na(.x))) |>
+  enframe(name = "Variable", value = "Missing Values") |>
+  kable(caption = "Missing Values in Fish Dataset") |>
+  kable_classic()
+```
+## Revision: 
+
+**Issue: Not using named arguments.**
+
+**Learned: Consistently using named arguments throughout code improves readability and makes the code easier to understand and debug.**
+
+**Question 8: Now turn your output into a very nice table, like the example shown in the instructions using the gt package. Specifically, your table should color the cells with 0 missing values green and cells with > 0 missing values red.** 
+
+*Hint: You will find this documentation page helpful: https://gt.rstudio.com/reference/data_color.html* 
+
+```{r}
+#| label: colored-table-missing-values-of-fish
+fish |>
+  map_int(.f = ~sum(is.na(.x))) |>  
+  enframe(name = "Variable", value = "Missing Values") |>
+  arrange(desc(`Missing Values`)) |>  
+  gt() |>
+  tab_header(
+    title = "Missing Values in Fish Dataset",
+    subtitle = "Green indicates complete data; red indicates missing data"
+  ) |>
+  data_color(
+    columns = `Missing Values`,
+    fn = scales::col_bin(
+      palette = c("lightgreen", "lightcoral"),
+      domain = NULL,
+      bins = c(0, 0.5, Inf)
+    )
+  ) |>
+  cols_align(
+    align = "center",
+    columns = `Missing Values`
+  ) |>
+  tab_options(
+    table.font.size = 14
+  )
+
+```
+
+
